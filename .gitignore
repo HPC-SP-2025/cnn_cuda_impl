@@ -1,0 +1,7 @@
+# Ignore Visual Studio Code files
+.vscode/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
