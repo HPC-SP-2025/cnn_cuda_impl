@@ -1,48 +1,55 @@
 # include <iostream>
+# include <vector>
+#include "model.h" 
+# include "cnn_library/layers/loss.h"
+using namespace std;
 
-int main(int argc, char* argv[])
+
+
+int main()
 { 
 
-    // Take epochs and device as command line arguments
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <epochs> <device>" << std::endl;
-        return 1;
-    }
+    // Hyperparameters
+    int batch_size = 64;
+    float lr = 0.001;    
+    int total_iterations = 10000;
+    int device = 0; // 0 for CPU, 1 for GPU
+    int input_size = 32;
+    int num_classes = 10;
 
-    int epochs = std::stoi(argv[1]);
-    std::string device = argv[2];
+    // Create the MNIST model
+    Sequential* net = create_mnist_model();
+    net->setDevice(device);
 
-    
-    
-    // Create the training for loop
-    std::cout << "Training on " << device << " for " << epochs << " epochs." << std::endl;
-    for (int i = 0; i < 1000; i++)
+    // Create the loss layer
+    Loss* loss_layer = new Loss();
+
+
+    // Create the training for loop For Epoch
+    std::cout << "Training on " << device << " for " << total_iterations << " iterations." << std::endl;
+
+    // Iterate over the the data
+    for (int iter = 0; iter < total_iterations; iter++)
     {
-        // Create a random image
-        std::vector<std::vector<int>> image(28, std::vector<int>(28, rand() % 256));
         
-        // Create a random label
-        int label = rand() % 10;
+        // Create a random array for input data and labels ( Will be replaced with dataloader)
+        std::vector<float> input_data(batch_size * input_size);
+        std::vector<float> label_vector(batch_size * num_classes);
+        std::vector<float> prediction(batch_size * input_size);
 
-        for (int epoch = 0; epoch < epochs; i++)
-        {
-            for (int batch_index = 0; batch_index < number_of_batches; batch_index++)
-            {
-                // Forwardfeed the model
-                prediction = net.forward();
 
-                // Backpropagation
-                net.backward(prediction, label_vector);
+        // Forwardfeed the model
+        net->forward(input_data, prediction);
 
-                // Update the weights
-                net.update_weights();
+        // Backpropagation
+        float loss_value = net->backward(prediction, label_vector, loss_layer);
 
-                // Print the loss
-                int loss = net.loss(prediction, label_vector);
-                std::cout << "Epoch: " << epoch << ", Batch: " << batch_index << ", Loss: " << loss << std::endl;
+        // Update the weights
+        net->updateParameters(lr);
 
-            }
+        // Print the loss
+        std::cout << "Iteration: " << iter << ", Loss: " << loss_value << std::endl;
 
-        }
     }
+
 }

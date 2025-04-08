@@ -28,6 +28,13 @@ class Layer
         // Update Parameters (pure virtual function to be implemented by derived classes)
         virtual void updateParameters(float learning_rate) = 0;
 
+        // Get Gradients
+        virtual void getGradients(std::vector<float>& gradients) = 0;
+
+        // Get Params
+
+
+
     private:
         int input_size;
         int output_size;

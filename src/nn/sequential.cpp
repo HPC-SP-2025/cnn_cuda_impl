@@ -1,6 +1,9 @@
 # include <iostream>
 # include <vector>
 
+// This file helps to create the computation graph for the model
+
+
 class Sequential
 {
 public:
