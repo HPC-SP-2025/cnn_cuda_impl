@@ -53,10 +53,13 @@ public:
 
 private:
 
-    // Implment your CUDA kernels in private of your layer
-    // __global__ void forwardKernelLoss(){}; // Example of a CUDA kernel function
-    // __global__ void backwardKernelLoss(){}; // Example of a CUDA kernel function
+    // CUDA KERNEL IMPLEMENTATION
+    // __global__ void forwardKernel(){}; // Example of a CUDA kernel function
+    // __global__ void backwardKernel(){}; // Example of a CUDA kernel function
 
+    // CPU IMPLEMENTATION
+    // void forwardCPU(){}; // Example of a CPU function
+    // void backwardCPU(){}; // Example of a CPU function
 };
 
 
