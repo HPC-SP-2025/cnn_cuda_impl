@@ -22,6 +22,7 @@ Sequential* create_mnist_model() {
     model->addLayer(new ReLU());
     model->addLayer(new Linear(32 * 26 * 26, 128)); // Flattened input size: 32 * 26 * 26, Output size: 128
     model->addLayer(new ReLU());
+    model->addLayer(new Linear(128, 64));
     model->addLayer(new Linear(128, 10)); // Fully connected layer to 10 classes
     model->addLayer(new Softmax());
 

@@ -3,8 +3,9 @@
 
 // Constructor
 Sequential::Sequential(int input_size, int output_size)
-    : input_size(input_size), output_size(output_size), device(0) {
+    {
     // Initialization logic if needed
+    std::vector<Layer*> layers;
 }
 
 // Destructor
@@ -18,18 +19,21 @@ void Sequential::addLayer(Layer* layer) {
 }
 
 // Set the device ID for the layer
-void Sequential::setDevice(int device) {
+void Sequential::setDevice(int device) 
+{
     this->device = device;
     // Logic to set the device for all layers
 }
 
 // Forward pass
-void Sequential::forward(const std::vector<float>& input, std::vector<float>& output) {
+void Sequential::forward(const std::vector<float>& input, std::vector<float>& output) 
+{
     // Logic for the forward pass
 }
 
 // Backward pass
-float Sequential::backward(const std::vector<float>& d_output, std::vector<float>& d_input, Layer* loss_layer) {
+float Sequential::backward(const std::vector<float>& d_output, std::vector<float>& d_input, Layer* loss_layer) 
+{
     // Logic for the backward pass
     return 0.0f; // Placeholder return value
 }

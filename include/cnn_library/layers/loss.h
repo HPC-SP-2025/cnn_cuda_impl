@@ -29,7 +29,6 @@ public:
     size_t getOutputSize() override;
 
 private:
- // implment your CUDA kernels here
 
 };
 
