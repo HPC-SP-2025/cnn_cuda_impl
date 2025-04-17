@@ -6,11 +6,14 @@ Sequential::Sequential(int input_size, int output_size)
     {
     // Initialization logic if needed
     std::vector<Layer*> layers;
+    input_size = input_size;
+    output_size = output_size;
 }
 
 // Destructor
 Sequential::~Sequential() {
     // Cleanup logic if needed
+
 }
 
 // Add a layer to the model
