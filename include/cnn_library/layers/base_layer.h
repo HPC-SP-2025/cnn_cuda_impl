@@ -1,9 +1,11 @@
 #ifndef BASE_LAYER_H
 #define BASE_LAYER_H
 
+// Include the headers
 #include <vector>
 #include <string>
 #include <memory>
+# include "../layers/base_layer.h"
 
 using namespace std;
 
@@ -13,6 +15,17 @@ class Layer
 protected:
     string layer_name; // Name of the layer
     int device_id;
+    size_t input_size;
+    size_t output_size;
+    size_t batch_size;
+
+    // For convolution Layer only
+    unsigned int input_height;
+    unsigned int output_height;
+    unsigned int input_width;
+    unsigned int output_width;
+    
+
 public:
     // Constructor and Destructor
     Layer();
@@ -25,11 +38,13 @@ public:
 
     // Forward and Backward pass
     virtual void forward(float* input, float* output) = 0;
-    virtual void backward(float* input, float* output) = 0;
+    virtual void backward(float* grad_input, float* grad_output) = 0;
 
     // Getters for input and output sizes
     virtual size_t getInputSize() = 0;
     virtual size_t getOutputSize() = 0;
+    virtual size_t numParams() = 0;
+    virtual string getLayerName() = 0;
 
     // set Device ID for the layer
     virtual void setDevice(int device) = 0;

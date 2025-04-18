@@ -54,6 +54,7 @@ float Sequential::backward(float* predicted, float* ground_truth, Layer* loss_la
     float loss_value = 0.0f;
     float* loss_ptr = new float[1];
     float* output = nullptr;
+    float* input = nullptr;
 
     // Forward Pass
     loss_value = loss_layer->forward(predicted, ground_truth);
@@ -67,7 +68,7 @@ float Sequential::backward(float* predicted, float* ground_truth, Layer* loss_la
     {
         Layer* layer = *it;
         layer->backward(output, input);
-        input = output; // Update output for the next layer in reverse
+        output = input; // Update output for the next layer in reverse
     }
 
     return loss_value;
@@ -95,12 +96,14 @@ void Sequential::updateParameters(float learning_rate)
 }
 
 // Get Gradients
-void Sequential::getGradients(std::vector<float>& gradients) {
+void Sequential::getGradients(std::vector<float>& gradients) 
+{
     // Logic to collect gradients from all layers
 }
 
 // Get Params
-void Sequential::getParams(std::vector<float>& params) {
+void Sequential::getParams(std::vector<float>& params) 
+{
     // Logic to collect parameters from all layers
 }
 
@@ -109,4 +112,4 @@ void Sequential::saveModel(const string filename)
     // Logic to save the model to a file
     std::cout << "Model saved to: " << filename << std::endl;
 }
-// Load Model
+

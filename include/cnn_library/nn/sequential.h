@@ -47,6 +47,10 @@ public:
 
     void saveModel(const string filename);
 
+    // Save Params
+    void summary();
+
+
 
 };
 

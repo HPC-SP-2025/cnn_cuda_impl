@@ -1,7 +1,7 @@
 # include <iostream>
 # include <vector>
 #include "model.h" 
-# include "cnn_library/layers/loss.h"
+# include "include/cnn_library/layers/loss.h"
 using namespace std;
 
 
@@ -14,11 +14,16 @@ int main()
     float lr = 0.001;    
     int total_iterations = 10000;
     int device = 0; // 0 for CPU, 1 for GPU
-    int input_size = 32;
+    int input_size = 768;
     int num_classes = 10;
 
     // Create the MNIST model
-    Sequential* net = create_mnist_model();
+    Sequential* net = create_mnist_model(input_size = input_size, batch_size = batch_size, num_classes = num_classes);
+
+    // Print the model summary
+    net->summary();
+
+    // Set the device for the model
     net->setDevice(device);
 
     // Create the loss layer
