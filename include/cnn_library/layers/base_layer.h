@@ -65,14 +65,14 @@ public:
     /* the forward function gets the pointer(*input) of the output of the previous
     memory, it will perform forward operation and then store output in the
     memory that it created in the constructor and save the pointer to 
-    that memory for the next layer in the second arguement(*output)*/
+    in the second arguement(*output) for the next layer to use*/
     virtual void forward(float* input, float* output) = 0;
 
     // BACKWARD FUNCTION
     /* The backward function takes the pointer of gradients(*grad_input) from NEXT layer
     and perform the gradient calculation. The calculated gradients will be saved
     in the gradients data member. It also calculates the gradients that flows to
-    the previous layer and saves in data member and saves the pointer in *grad_output*/
+    the PREVIOUS layer and saves in data member and passes the pointer in *grad_output*/
     virtual void backward(float* grad_input, float* grad_output) = 0;
 
     // INPUT SIZE
