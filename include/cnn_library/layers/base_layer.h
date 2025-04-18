@@ -66,19 +66,16 @@ public:
     virtual void initializeWeights(){}; // If the layer has weights else dont override it
     virtual void initializeBiases(){};  // If the layer has biases else dont override it
 
-
-
-
-private:
-
-    // CUDA KERNEL IMPLEMENTATION
-    // __global__ void forwardKernel(){}; // Example of a CUDA kernel function
-    // __global__ void backwardKernel(){}; // Example of a CUDA kernel function
-
-    // CPU IMPLEMENTATION
-    // void forwardCPU(){}; // Example of a CPU function
-    // void backwardCPU(){}; // Example of a CPU function
 };
+
+
+// CUDA KERNEL IMPLEMENTATION OUTSIDE THE CLASS
+// __global__ void forwardKernel(){}; // Example of a CUDA kernel function
+// __global__ void backwardKernel(){}; // Example of a CUDA kernel function
+
+// CPU IMPLEMENTATION 
+// void forwardCPU(){}; // Example of a CPU function
+// void backwardCPU(){}; // Example of a CPU function
 
 
 #endif // BASE_LAYER_H
