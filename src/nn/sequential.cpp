@@ -1,4 +1,5 @@
 #include "../../include/cnn_library/nn/sequential.h"
+#include "../../include/cnn_library/layers/base_layer.h"
 #include <iostream>
 
 // Constructor
@@ -94,7 +95,7 @@ void Sequential::updateParameters(float learning_rate)
     }
 }
 
-void Sequential::summary() 
+void Sequential::getSummary() 
 {
     std::cout << "Model Summary:" << std::endl;
     for (Layer* layer : layers) 

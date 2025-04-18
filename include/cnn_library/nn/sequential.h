@@ -39,6 +39,9 @@ public:
     // Update Parameters
     void updateParameters(float learning_rate);
 
+    // Get Summary
+    void getSummary();
+
     // Get Gradients
     void getGradients(std::vector<float>& gradients);
 
