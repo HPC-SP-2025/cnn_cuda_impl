@@ -62,17 +62,25 @@ public:
     // -------------------------------------------------------------------
 
     // FORWARD FUNCTION
-    /* the forward function gets the pointer(*input) of the output of the previous
-    memory, it will perform forward operation and then store output in the
-    memory that it created in the constructor and save the pointer to 
-    in the second arguement(*output) for the next layer to use*/
+    /* Perfroms the forward pass of the layer and saves output in its output
+    data member.
+
+    Arguements:
+    *input: pointer of the output of the previous layer
+    *output: pointer of the output of the current layer
+    */
+    
     virtual void forward(float* input, float* output) = 0;
 
     // BACKWARD FUNCTION
-    /* The backward function takes the pointer of gradients(*grad_input) from NEXT layer
-    and perform the gradient calculation. The calculated gradients will be saved
-    in the gradients data member. It also calculates the gradients that flows to
-    the PREVIOUS layer and saves in data member and passes the pointer in *grad_output*/
+    /* Performs the backward pass of the layer and saves the gradients in its 
+    gradients data member. It also calculates the gradients that flows to 
+    the PREVIOUS layer and saves in data member and passes the pointer in *grad_output
+    Arguements:
+    *grad_input: pointer of the gradients from the NEXT layer
+    *grad_output: pointer of the gradients to be passed to the PREVIOUS layer
+    
+    */
     virtual void backward(float* grad_input, float* grad_output) = 0;
 
     // INPUT SIZE
@@ -92,7 +100,7 @@ public:
     virtual string getLayerName() = 0;
 
     // SET DEVICE
-    /* This function will set the device flag of the layer and move all the 
+    /* This function will set the device flag of the layer and copy all the 
     memory allocated (weights, gradients, buffers to the specified device and link
     it to specific device pointers)*/
     virtual void setDevice(int device) = 0;
