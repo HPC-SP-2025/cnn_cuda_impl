@@ -95,6 +95,20 @@ void Sequential::updateParameters(float learning_rate)
     }
 }
 
+void Sequential::summary() 
+{
+    std::cout << "Model Summary:" << std::endl;
+    for (Layer* layer : layers) 
+    {
+        std::cout << "Layer: " << layer->getLayerName() 
+                  << ", Input Size: (" << layer->getInputSize() << ") "
+                  << ", Output Size: (" << layer->getOutputSize() << ")"
+                  << ", Number of Parameters: " << layer->numParams()
+                  << ", Device ID: " << layer->getDevice()
+                  << std::endl;
+    }
+}
+
 // Get Gradients
 void Sequential::getGradients(std::vector<float>& gradients) 
 {

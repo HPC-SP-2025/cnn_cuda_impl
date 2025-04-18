@@ -30,7 +30,7 @@ private:
 
 public:
     // Constructor
-    Linear(int input_size, int output_size);
+    Linear(int input_size, int output_size, int batch_size);
     
     // Destructor
     ~Linear();

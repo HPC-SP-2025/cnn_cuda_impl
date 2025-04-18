@@ -40,7 +40,7 @@ public:
     virtual void forward(float* input, float* output) = 0;
     virtual void backward(float* grad_input, float* grad_output) = 0;
 
-    // Getters for input and output sizes
+    // Get the metadata for the layer
     virtual size_t getInputSize() = 0;
     virtual size_t getOutputSize() = 0;
     virtual size_t numParams() = 0;
@@ -48,6 +48,8 @@ public:
 
     // set Device ID for the layer
     virtual void setDevice(int device) = 0;
+    virtual int getDevice() = 0;
+    
 
 
 
