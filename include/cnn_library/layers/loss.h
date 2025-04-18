@@ -6,18 +6,18 @@
 #include "cnn_library/layers/base_layer.h"
 
 class Loss : public Layer {
-public:
+  public:
     // Constructor
     Loss();
-    
+
     // Destructor
     ~Loss();
 
     // Forward pass override
-    void forward(const std::vector<float>& input, std::vector<float>& output) override;
+    void forward(const std::vector<float> &input, std::vector<float> &output) override;
 
     // Backward pass override
-    void backward(const std::vector<float>& grad_output, std::vector<float>& grad_input) override;
+    void backward(const std::vector<float> &grad_output, std::vector<float> &grad_input) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
@@ -28,8 +28,7 @@ public:
     // Get output size
     size_t getOutputSize() override;
 
-private:
-
+  private:
 };
 
 #endif // LOSS_H
