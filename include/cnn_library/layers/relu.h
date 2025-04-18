@@ -6,26 +6,31 @@
 class ReLU : public Layer {
 
 private:
-    int input_channels;
-    int output_channels;
-    int input_width;
-    int input_height;       
-    int output_width;
-    int output_height;  
+    int input_size;
+    int output_size;
+    int device; 
+
+    // Output buffer
+    float* host_output_buffer;
+    float* device_output_buffer;
+
+    // CUDA parameters
+    int blocks;
+    int threads_per_block;
 
 public:
 
     // Constructor
-    ReLU();
+    ReLU(int input_size, int output_size);
     
     // Destructor
     ~ReLU();
 
     // Forward pass override
-    void forward(const std::vector<float>& input, std::vector<float>& output) override;
+    void forward(float* input, float* output) override;
 
     // Backward pass override
-    void backward(const std::vector<float>& grad_output, std::vector<float>& grad_input) override;
+    void backward(float* grad_input, float* grad_output) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
@@ -38,12 +43,12 @@ public:
 
 private:
 
-    // CUDA KERNEL IMPLEMENTATION
-    // __global__ void forwardKernelReLU(){}; // Example of a CUDA kernel function
-    // __global__ void backwardKernelReLU(){}; // Example of a CUDA kernel function
+    // // CUDA KERNEL IMPLEMENTATION
+    // __global__ void forwardKernelReLU(float* input, float* output){};
+    // __global__ void backwardKernelReLU(){};
 
     // CPU IMPLEMENTATION
-    // void forwardCpuReLU(){}; // Example of a CPU function
-    // void backwardCpuReLU(){}; // Example of a CPU function
+    void forwardCpuReLU(float* input, float* output){};
+    void backwardCpuReLU(){};
 
 };
