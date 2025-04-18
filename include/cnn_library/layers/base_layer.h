@@ -25,46 +25,99 @@ protected:
     unsigned int output_height;
     unsigned int input_width;
     unsigned int output_width;
+
+    // Weights and Biases
+    float* host_weights;
+    float* host_biases;
+    float* device_weights;
+    float* device_biases;
+
+    // Gradients
+    float* host_grad_weights;
+    float* host_grad_biases;
+    float* device_grad_weights;
+    float* device_grad_biases;
+
+    // Forward Buffer
+    float* host_forward_buffer;
+    float* device_forward_buffer;
+
+    // Backward Buffer
+    float* host_backward_buffer;
+    float* device_backward_buffer;
+    
     
 
 public:
-    // Constructor and Destructor
+    // Constructor:
+    /* Constructor is responsible for inilializing the weights and biases, gradients,
+    forward_buffer and the backward_buffer for the layer on the CPU*/
     Layer();
     virtual ~Layer() = default;
+
 
 
     // -------------------------------------------------------------------
     // COMPULSORY FUNCTIONS
     // -------------------------------------------------------------------
 
-    // Forward and Backward pass
+    // FORWARD FUNCTION
+    /* the forward function gets the pointer(*input) of the output of the previous
+    memory, it will perform forward operation and then store output in the
+    memory that it created in the constructor and save the pointer to 
+    that memory for the next layer in the second arguement(*output)*/
     virtual void forward(float* input, float* output) = 0;
+
+    // BACKWARD FUNCTION
+    /* The backward function takes the pointer of gradients(*grad_input) from NEXT layer
+    and perform the gradient calculation. The calculated gradients will be saved
+    in the gradients data member. It also calculates the gradients that flows to
+    the previous layer and saves in data member and saves the pointer in *grad_output*/
     virtual void backward(float* grad_input, float* grad_output) = 0;
 
-    // Get the metadata for the layer
+    // INPUT SIZE
+    /*Returns the Input size the layer*/
     virtual size_t getInputSize() = 0;
+
+    // OUTPUT SIZE
+    /*Returns the Output size the layer*/
     virtual size_t getOutputSize() = 0;
+
+    // NUMBER OF WEIGHTS SIZE
+    /*Returns the number of weights or bias in the layer*/
     virtual size_t numParams() = 0;
+
+    // LAYER NAME
+    /*Returns the name of the layer (Linear/Softmax/RelU)*/
     virtual string getLayerName() = 0;
 
-    // set Device ID for the layer
+    // SET DEVICE
+    /* This function will set the device flag of the layer and move all the 
+    memory allocated (weights, gradients, buffers to the specified device and link
+    it to specific device pointers)*/
     virtual void setDevice(int device) = 0;
+
+    // GET DEVICE
+    /* Returns the device state of the layer*/
     virtual int getDevice() = 0;
     
-
-
-
 
     // -------------------------------------------------------------------
     // OPTIONAL FUNCTIONS
     // -------------------------------------------------------------------
 
-    // Method to update parameters
-    virtual void updateParameters(float learning_rate){} // If the layer has parameters else dont override it
+    // UPDATE THE PARAMETERS
+    /* Carries out hte Gradient Update operation using the weights and gradients
+    calculated. It updates the weights and biases with the updated weights and biases*/
+    virtual void updateParameters(float learning_rate){}
 
     // Initialize the weights and Biases
-    virtual void initializeWeights(){}; // If the layer has weights else dont override it
-    virtual void initializeBiases(){};  // If the layer has biases else dont override it
+    /* This function will initialize the weights and biases of the layer based on
+    input and output size. It will be used in the constructor of the layer and allocate
+    memory using the host pointer.*/
+    /* This function will be used in the constructor of the layer and allocate*/
+    virtual void initializeWeights(){}; 
+    virtual void initializeBiases(){}; 
 
 };
 
