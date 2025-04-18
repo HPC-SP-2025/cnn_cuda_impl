@@ -27,7 +27,7 @@ private:
         return loss;
     }
 
-    // TODO: use reduction
+    // TODO: use reduction to avoid atomic adds
     __global__ void forward_kernel(vector<float> &output, vector<float> &target, float *loss, int n)
     {
         int idx = blockDim.x * blockIdx.x + threadIdx.x;
