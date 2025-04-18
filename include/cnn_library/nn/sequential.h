@@ -2,7 +2,7 @@
 #define SEQUENTIAL_H
 
 # include <vector>
-# include "cnn_library/layers/base_layer.h"
+# include "../layers/base_layer.h"
 
 class Sequential
 {
@@ -11,6 +11,7 @@ private:
     int input_size;
     int output_size;
     int device;
+    std::vector<Layer*> layers;
     
 public:
     // Constructor
@@ -26,10 +27,10 @@ public:
     void setDevice(int device);
 
     // Forward pass
-    void forward(const std::vector<float>& input, std::vector<float>& output);
+    void forward(float* input, float* output);
 
     // Backward pass
-    float backward(const std::vector<float>& d_output, std::vector<float>& d_input, Layer* loss_layer);
+    float backward(float* prediected, float* ground_truth, Layer* loss);
 
     // Getters for input and output sizes
     int getInputSize() const;
@@ -43,6 +44,8 @@ public:
 
     // Get Params
     void getParams(std::vector<float>& params);
+
+    void saveModel(const string filename);
 
 
 };
