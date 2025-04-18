@@ -24,8 +24,8 @@ public:
     // -------------------------------------------------------------------
 
     // Forward and Backward pass
-    virtual void forward(const std::vector<float>& input, std::vector<float>& output) = 0;
-    virtual void backward(const std::vector<float>& grad_output, std::vector<float>& grad_input) = 0;
+    virtual void forward(float* input, float* output) = 0;
+    virtual void backward(float* input, float* output) = 0;
 
     // Getters for input and output sizes
     virtual size_t getInputSize() = 0;

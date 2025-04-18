@@ -33,9 +33,21 @@ int main()
     {
         
         // Create a random array for input data and labels ( Will be replaced with dataloader)
-        std::vector<float> input_data(batch_size * input_size);
-        std::vector<float> label_vector(batch_size * num_classes);
-        std::vector<float> prediction(batch_size * input_size);
+        float* input_data = new float[batch_size * input_size * input_size];
+        float* label_vector = new float[batch_size * num_classes];
+        float* prediction = new float[batch_size * num_classes];
+
+        // Fill the input data and labels with random values
+        for (int i = 0; i < batch_size * input_size * input_size; i++)
+        {
+            input_data[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        }
+        
+        // Fill the label vector with random values
+        for (int i = 0; i < batch_size * num_classes; i++)
+        {
+            label_vector[i] = static_cast<float>(rand()) / static_cast<int>(RAND_MAX);
+        }
 
 
         // Forwardfeed the model
