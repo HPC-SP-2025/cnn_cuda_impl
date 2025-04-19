@@ -7,11 +7,10 @@ class Softmax : public Layer {
 
 protected:
     string layer_name; // Name of the layer
-    int device_id;
+    int device = 0; // 0 for CPU, 1 for GPU
     size_t input_size;
     size_t output_size;
     size_t batch_size;
-    int set_device = 0; // 0 for CPU, 1 for GPU
 
     // Forward Buffer
     float* host_forward_buffer;
@@ -55,10 +54,12 @@ public:
 private:
 
     // CUDA KERNEL IMPLEMENTATION
-     __global__ void forwardKernelSoftmax(float* input, float* output){}; // Example of a CUDA kernel function
-     __global__ void backwardKernelSoftmax(float* grad_input, float* grad_output){}; // Example of a CUDA kernel function
+    __global__ void forwardKernelSoftmax(float* input, float* output, size_t num_classes, size_t batch_size);
+    __global__ void backwardKernelSoftmax(float* grad_input, float* grad_output, size_t num_classes, size_t batch_size);
 
     // CPU IMPLEMENTATION
-     void forwardCpuSoftmax(float* input, float* output){}; // Example of a CPU function
-     void backwardCpuSoftmax(float* grad_input, float* grad_output){}; // Example of a CPU function
+    void forwardCpuSoftmax(float* input, float* output);
+    void backwardCpuSoftmax(float* grad_input, float* grad_output);
+    __host__ void forwardGpuSoftmax(float* input, float* output);
+    __host__ void backwardGpuSoftmax(float* grad_input, float* grad_output);
 }
