@@ -5,23 +5,30 @@
 
 class ReLU : public Layer {
 
-private:
-    int input_size;
-    int output_size;
-    int device; 
+protected:  // TODO remove protected variables
+    string layer_name; // Name of the layer
+    int device = 0; // 0 for CPU, 1 for GPU
+    size_t input_size;
+    size_t output_size;
+    size_t batch_size;
+    size_t threads_per_block;
+    float* layer_input_ptr;
 
-    // Output buffer
-    float* host_output_buffer;
-    float* device_output_buffer;
+    // Forward Buffer
+    float* host_forward_buffer;
+    float* device_forward_buffer;
+
+    // Backward Buffer
+    float* host_backward_buffer;
+    float* device_backward_buffer;
 
     // CUDA parameters
-    int blocks;
     int threads_per_block;
 
 public:
 
     // Constructor
-    ReLU(int input_size, int output_size);
+    ReLU(size_t input_size, size_t output_size, size_t batch_size);
     
     // Destructor
     ~ReLU();
@@ -30,7 +37,7 @@ public:
     void forward(float* input, float* output) override;
 
     // Backward pass override
-    void backward(float* grad_input, float* grad_output) override;
+    void backward(float* grad_input, float* grad_output, float* layer_input_ptr) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
@@ -49,6 +56,6 @@ private:
 
     // CPU IMPLEMENTATION
     void forwardCpuReLU(float* input, float* output){};
-    void backwardCpuReLU(){};
+    void backwardCpuReLU(float* grad_input, float* grad_output, float* layer_input_ptr){};
 
 };
