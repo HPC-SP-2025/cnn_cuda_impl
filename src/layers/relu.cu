@@ -84,7 +84,9 @@ void ReLU::backwardCpuReLU(float* grad_input, float* grad_output, float* layer_i
 // GPU forward implementation
 __global__ void forwardKernelReLU(float* input, float* output){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    output[idx] = fmaxf(input[idx],0.0f);
+    if (idx < output_size) {
+        output[idx] = fmaxf(input[idx],0.0f);
+    }
 } 
 
 // GPU backward implementation
