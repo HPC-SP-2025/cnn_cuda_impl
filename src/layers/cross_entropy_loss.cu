@@ -5,61 +5,89 @@
 class CrossEntropy_Loss : public Loss {
   public:
     CrossEntropy_Loss() {}
-    ~CrossEntropy_Loss() {}
+    ~CrossEntropy_Loss() {
+        if (device)
+            cudaFree(d_loss);
+    }
 
-    virtual void forward(const std::vector<float> &input, std::vector<float> &output) = 0;
-    virtual void backward(const std::vector<float> &grad_output, std::vector<float> &grad_input) = 0;
+    void forward(const float *pred, float *output) {
+        float loss;
+        if (this->device) {
+            cudaMemset(d_loss, 0, sizeof(float));
+            forward_kernel<<<1, 256>>>(pred, this->target, d_loss, batch_size, input_size);
+            cudaMemcpy(&loss, d_loss, sizeof(float), cudaMemcpyDeviceToHost);
 
-  private:
-    const double EPSILON = 1e-9;
+        } else {
+            loss = forward_CPU(pred, this->target);
+        }
+        output[0] = loss;
+    }
+
+    void backward(float *pred, float *grad_output) {
+        if (this->device) {
+            backward_kernel(grad_output, pred, this->target, batch_size, input_size);
+        } else {
+            backward_CPU(grad_output, pred, this->target);
+        }
+    }
+
+    void setDevice(int device) override {
+        this->device = device;
+        if (device)
+            cudaMalloc(&d_loss, sizeof(float));
+    }
+
+    void setTarget(float *target) { this->target = target; }
 
     /**
      * output: Flattened 1D vector with class probabilites
      * target: class label
      */
-    int forwardCPU(const std::vector<float> &output, std::vector<float> &target) {
-        int n = target.size();
-        // if (n != target.size())
-        //     throw invalid_argument("Input and target size are not same");
-
-        int num_classes = output.size() / n;
+    int forward_CPU(const float *pred, float *target) {
+        int n = batch_size;
+        int num_classes = input_size;
 
         float loss = 0.0;
         for (auto i = 0; i < n; i++) {
-            loss -= log(output[i * num_classes + target[i]] + EPSILON);
+            loss -= log(pred[i * num_classes + (int)target[i]] + EPSILON);
         }
         loss /= static_cast<float>(n);
         return loss;
     }
 
-    __global__ void forward_kernel(float *output, float *target, float *loss, int n, int num_classes) {
+    __global__ void forward_kernel(const float *pred, float *target, float *loss, int n, int num_classes) {
         int idx = blockDim.x * blockIdx.x + threadIdx.x;
         if (idx < n) {
-            float loss_i = log(output[idx * num_classes + (int)target[idx]] + EPSILON);
+            float loss_i = log(pred[idx * num_classes + (int)target[idx]] + EPSILON);
             atomicAdd(loss, -loss_i);
         }
     }
 
-    void backwardCPU(vector<float> &grad_output, vector<float> &output, vector<float> &target) {
-        grad_output.resize(output.size());
+    void backward_CPU(float *grad_output, float *pred, float *target) {
 
-        int n = target.size();
-        int num_classes = output.size() / n;
-        for (auto i = 0; i < grad_output.size(); i++) {
+        int n = batch_size;
+        int num_classes = input_size;
+        for (auto i = 0; i < n; i++) {
             for (auto j = 0; j < num_classes; j++)
-                grad_output[i * num_classes + j] = output[i * num_classes + j] / n;
+                grad_output[i * num_classes + j] = pred[i * num_classes + j] / n;
 
-            grad_output[i * num_classes + target[i]] -= 1.0 / n;
+            grad_output[i * num_classes + (int)target[i]] -= 1.0 / n;
         }
     }
 
-    __global__ void backward_kernel(float *grad_output, float *output, float *target, int n, int num_classes) {
+    __global__ void backward_kernel(float *grad_output, float *pred, float *target, int n, int num_classes) {
         int idx = blockDim.x * blockIdx.x + threadIdx.x;
         if (idx < n) {
             for (auto j = 0; j < num_classes; j++)
-                grad_output[idx * num_classes + j] = output[idx * num_classes + j] / n;
+                grad_output[idx * num_classes + j] = pred[idx * num_classes + j] / n;
 
             grad_output[idx * num_classes + (int)target[idx]] -= 1.0 / n;
         }
     }
+
+  private:
+    float *target;
+    float *d_loss;
+
+    const double EPSILON = 1e-9;
 };

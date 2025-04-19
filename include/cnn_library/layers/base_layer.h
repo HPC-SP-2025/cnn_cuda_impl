@@ -11,11 +11,10 @@ class Layer {
 
   protected:
     string layer_name; // Name of the layer
-    int device_id;
+    int device = 0;
     size_t input_size;
     size_t output_size;
     size_t batch_size;
-    int set_device = 0; // 0 for CPU, 1 for GPU
 
     // For convolution Layer only
     unsigned int input_height;

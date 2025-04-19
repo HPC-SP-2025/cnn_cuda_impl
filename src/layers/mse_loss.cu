@@ -5,46 +5,75 @@
 class MSE_Loss : public Loss {
   public:
     MSE_Loss() {}
-    ~MSE_Loss() {}
+    ~MSE_Loss() {
+        if (device)
+            cudaFree(d_loss);
+    }
 
-    virtual void forward(const std::vector<float> &input, std::vector<float> &output) = 0;
-    virtual void backward(const std::vector<float> &grad_output, std::vector<float> &grad_input) = 0;
+    void forward(const float *pred, float *output) {
+        float loss;
+        if (this->device == 0) {
+            loss = forward_CPU(pred, this->target);
+        } else {
+            cudaMemset(d_loss, 0, sizeof(float));
+            forward_kernel<<<1, 256>>>(pred, this->target, d_loss, batch_size);
+            cudaMemcpy(&loss, d_loss, sizeof(float), cudaMemcpyDeviceToHost);
+        }
+        output[0] = loss;
+    }
 
-  private:
-    int forward_CPU(const std::vector<float> &output, std::vector<float> &target) {
-        int n = output.size();
-        if (n != target.size())
-            throw invalid_argument("Input and target size are not same");
+    void backward(float *pred, float *grad_output) {
+        if (this->device == 0) {
+
+            backward_CPU(grad_output, pred, target);
+        } else {
+            backward_kernel(grad_output, pred, target, batch_size);
+        }
+    }
+
+    void setDevice(int device) override {
+        this->device = device;
+        if (device)
+            cudaMalloc(&d_loss, sizeof(float));
+    }
+    void setTarget(float *target) { this->target = target; }
+
+    int forward_CPU(const float *pred, float *target) {
+        int n = batch_size;
 
         float loss = 0.0;
         for (auto i = 0; i < n; i++) {
-            loss += pow(output[i] - target[i], 2);
+            loss += pow(pred[i] - target[i], 2);
         }
         loss /= static_cast<float>(n);
         return loss;
     }
 
     // TODO: use reduction to avoid atomic adds
-    __global__ void forward_kernel(float *output, float *target, float *loss, int n) {
+    __global__ void forward_kernel(const float *pred, float *target, float *loss, int n) {
         int idx = blockDim.x * blockIdx.x + threadIdx.x;
         if (idx < n) {
-            float diff = output[idx] - target[idx];
+            float diff = pred[idx] - target[idx];
             atomicAdd(loss, diff * diff / n);
         }
     }
 
-    void backward_CPU(vector<float> &grad_output, vector<float> &output, vector<float> &target) {
-        int n = output.size();
-        grad_output.resize(n);
-        for (auto i = 0; i < grad_output.size(); i++) {
-            grad_output[i] = 2.0 * (output[i] - target[i]) / n;
+    void backward_CPU(float *grad_output, float *pred, float *target) {
+        int n = batch_size;
+
+        for (auto i = 0; i < n; i++) {
+            grad_output[i] = 2.0 * (pred[i] - target[i]) / n;
         }
     }
 
-    __global__ void backward_kernel(float *grad_output, float *output, float *target, int n) {
+    __global__ void backward_kernel(float *grad_output, float *pred, float *target, int n) {
         int idx = blockDim.x * blockIdx.x + threadIdx.x;
         if (idx < n) {
-            grad_output[idx] = 2.0 * (output[idx] - target[idx]) / n;
+            grad_output[idx] = 2.0 * (pred[idx] - target[idx]) / n;
         }
     }
+
+  private:
+    float *target;
+    float *d_loss;
 };
