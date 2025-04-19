@@ -14,10 +14,10 @@ class Loss : public Layer {
     ~Loss();
 
     // Forward pass override
-    void forward(float *input, float *output) override;
+    void forward(float *pred, float *target) override;
 
     // Backward pass override
-    void backward(float *grad_output, float *grad_input) override;
+    void backward(float *pred, float *grad_output) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
@@ -28,7 +28,17 @@ class Loss : public Layer {
     // Get output size
     size_t getOutputSize() override;
 
+    size_t numParams() override { return 0; };
+
+    string getLayerName() override { return this->layer_name; }
+
+    int getDevice() override { return this->device; }
+
+    virtual void setTarget(float *target);
+
   private:
+  protected:
+    float *target;
 };
 
 #endif // LOSS_H

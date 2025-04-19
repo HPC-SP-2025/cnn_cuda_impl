@@ -4,10 +4,19 @@
 
 class MSE_Loss : public Loss {
   public:
-    MSE_Loss() {}
+    MSE_Loss(size_t batch_size) {
+        this->layer_name = "MSE_Loss";
+        this->batch_size = batch_size;
+
+        float *host_backward_buffer = new float[batch_size];
+    }
+
     ~MSE_Loss() {
-        if (device)
+        delete[] host_backward_buffer;
+        if (device) {
             cudaFree(d_loss);
+            cudaFree(device_backward_buffer);
+        }
     }
 
     void forward(const float *pred, float *output) {
@@ -33,12 +42,14 @@ class MSE_Loss : public Loss {
 
     void setDevice(int device) override {
         this->device = device;
-        if (device)
+        if (device) {
             cudaMalloc(&d_loss, sizeof(float));
+            cudaMalloc(&device_backward_buffer, sizeof(float) * batch_size);
+        }
     }
-    void setTarget(float *target) { this->target = target; }
+    void setTarget(float *target) override { this->target = target; }
 
-    int forward_CPU(const float *pred, float *target) {
+    float forward_CPU(const float *pred, float *target) {
         int n = batch_size;
 
         float loss = 0.0;
@@ -74,6 +85,6 @@ class MSE_Loss : public Loss {
     }
 
   private:
-    float *target;
+    // float *target;
     float *d_loss;
 };

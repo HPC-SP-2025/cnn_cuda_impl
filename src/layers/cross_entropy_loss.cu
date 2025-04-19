@@ -4,10 +4,20 @@
 
 class CrossEntropy_Loss : public Loss {
   public:
-    CrossEntropy_Loss() {}
+    CrossEntropy_Loss(size_t input_size, size_t batch_size) {
+        this->layer_name = "Cross_Entropy_Loss";
+        this->batch_size = batch_size;
+        this->input_size = input_size;
+
+        host_backward_buffer = new float[batch_size * input_size];
+    }
+
     ~CrossEntropy_Loss() {
-        if (device)
+        delete[] host_backward_buffer;
+        if (device) {
+            cudaFree(device_backward_buffer);
             cudaFree(d_loss);
+        }
     }
 
     void forward(const float *pred, float *output) {
@@ -33,8 +43,10 @@ class CrossEntropy_Loss : public Loss {
 
     void setDevice(int device) override {
         this->device = device;
-        if (device)
+        if (device) {
             cudaMalloc(&d_loss, sizeof(float));
+            cudaMalloc(&device_backward_buffer, sizeof(float) * batch_size * input_size);
+        }
     }
 
     void setTarget(float *target) { this->target = target; }
@@ -43,7 +55,7 @@ class CrossEntropy_Loss : public Loss {
      * output: Flattened 1D vector with class probabilites
      * target: class label
      */
-    int forward_CPU(const float *pred, float *target) {
+    float forward_CPU(const float *pred, float *target) {
         int n = batch_size;
         int num_classes = input_size;
 
@@ -86,7 +98,6 @@ class CrossEntropy_Loss : public Loss {
     }
 
   private:
-    float *target;
     float *d_loss;
 
     const double EPSILON = 1e-9;
