@@ -81,7 +81,7 @@ public:
     *grad_output: pointer of the gradients to be passed to the PREVIOUS layer
     
     */
-    virtual void backward(float* grad_input, float* grad_output) = 0;
+    virtual float* backward(float* grad_input) = 0;
 
     // INPUT SIZE
     /*Returns the Input size the layer*/
