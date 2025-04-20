@@ -1,5 +1,6 @@
 # Ignore Visual Studio Code files
 .vscode/
+.idea/
 
 # Ignore Python cache files
 __pycache__/
