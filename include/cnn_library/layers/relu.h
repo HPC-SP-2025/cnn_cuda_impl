@@ -1,7 +1,10 @@
+#ifndef RELU_H
+#define RELU_H
+
 #include <iostream>
 #include <vector>
 #include <string>
-#include "cnn_library/layers/base_layer.h"
+#include "base_layer.h"
 
 class ReLU : public Layer {
 
@@ -11,7 +14,8 @@ protected:  // TODO remove protected variables
     size_t input_size;
     size_t output_size;
     size_t batch_size;
-    size_t threads_per_block;
+
+    // Input buffer
     float* layer_input_ptr;
 
     // Forward Buffer
@@ -23,7 +27,7 @@ protected:  // TODO remove protected variables
     float* device_backward_buffer;
 
     // CUDA parameters
-    int threads_per_block;
+    size_t threads_per_block;
 
 public:
 
@@ -34,13 +38,16 @@ public:
     ~ReLU();
 
     // Forward pass override
-    void forward(float* input, float* output) override;
+    float* forward(float* input) override;
 
     // Backward pass override
-    void backward(float* grad_input, float* grad_output, float* layer_input_ptr) override;
+    void backward(float* grad_input, float* grad_output) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
+
+    // Get device ID for the layer
+    int getDevice() override;
 
     // Get input size
     size_t getInputSize() override;
@@ -48,14 +55,21 @@ public:
     // Get output size
     size_t getOutputSize() override;
 
+    // Get layer name
+    string getLayerName() override;
+
+    // Get number of parameters
+    size_t numParams() override {
+        std::cerr << "numParams() called on ReLU, which has no parameters.\n";
+        return -1;
+    }
+
 private:
 
-    // // CUDA KERNEL IMPLEMENTATION
-    // __global__ void forwardKernelReLU(float* input, float* output){};
-    // __global__ void backwardKernelReLU(){};
-
     // CPU IMPLEMENTATION
-    void forwardCpuReLU(float* input, float* output){};
-    void backwardCpuReLU(float* grad_input, float* grad_output, float* layer_input_ptr){};
+    void forwardCpuReLU(float* input, float* output);
+    void backwardCpuReLU(float* grad_input, float* grad_output);
 
 };
+
+#endif  // RELU_H

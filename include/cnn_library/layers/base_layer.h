@@ -5,7 +5,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-# include "../layers/base_layer.h"
 
 using namespace std;
 
@@ -53,7 +52,7 @@ public:
     // Constructor:
     /* Constructor is responsible for inilializing the weights and biases, gradients,
     forward_buffer and the backward_buffer for the layer on the CPU*/
-    Layer();
+    Layer(){};
     virtual ~Layer() = default;
 
 
@@ -71,7 +70,7 @@ public:
     *output: pointer of the output of the current layer
     */
     
-    virtual void forward(float* input, float* output) = 0;
+    virtual float* forward(float* input) = 0;
 
     // BACKWARD FUNCTION
     /* Performs the backward pass of the layer and saves the gradients in its 
@@ -82,7 +81,7 @@ public:
     *grad_output: pointer of the gradients to be passed to the PREVIOUS layer
     
     */
-    virtual void backward(float* grad_input, float* grad_output) = 0;
+    virtual float* backward(float* grad_input) = 0;
 
     // INPUT SIZE
     /*Returns the Input size the layer*/
