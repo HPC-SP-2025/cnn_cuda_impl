@@ -11,7 +11,7 @@ ReLU::ReLU(size_t input_size, size_t output_size, size_t batch_size){
     
     float* host_forward_buffer = (float*)malloc(sizeof(float) * output_size * batch_size);
     float* host_backward_buffer = (float*)malloc(sizeof(float) * input_size * batch_size);
-    cout << "ReLU constructor call\n";
+    std::cout << "ReLU constructor call\n";
 }
 
 // Destructor
@@ -23,25 +23,25 @@ ReLU::~ReLU(){
         cudeFree(device_forward_buffer);
         cudeFree(device_backward_buffer); 
     }
-    cout << "ReLU destructor call\n";
+    std::cout << "ReLU destructor call\n";
 }
 
 // Forward
-void ReLU::forward(float* input, float* output){
+float* ReLU::forward(float* input){
     if(!device){
         forwardCpuReLU(input, host_forward_buffer);
-        output = host_forward_buffer;
+        return host_forward_buffer;
     }
     else{
         size_t blocks = (output_size + threadsPerBlock - 1) / threadsPerBlock;
         forwardKernelReLU<<< blocks, threads_per_block >>>(input, device_forward_buffer);
-        output = device_forward_buffer;
+        return device_forward_buffer;
     }
     layer_input_ptr = input;
 }
 
 // Backward
-void ReLU::backward(float* grad_input, float* grad_output, float* layer_input_ptr){
+void ReLU::backward(float* grad_input, float* grad_output){
     if(!device){
         backwardCpuReLU(grad_input, host_backward_buffer);
         grad_output = host_backward_buffer;
