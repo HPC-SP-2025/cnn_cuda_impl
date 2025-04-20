@@ -26,11 +26,13 @@ private:
     float* host_buffer;
     float* device_buffer;
 
+    // Cached input for backward pass
+    float* cached_input;
     
 
 public:
     // Constructor
-    Linear(int input_size, int output_size, int batch_size);
+    Linear(size_t input_size, size_t output_size, size_t batch_size = 1);
     
     // Destructor
     ~Linear();
@@ -52,6 +54,14 @@ public:
 
 private:
 
+    // CPU Forward Pass
+    void forwardCPU(float* input, float* output);
+    // CPU Backward Pass
+    void backwardCPU(float* grad_input, float* grad_output);
+    // GPU Forward Pass
+    void forwardGPU(float* input, float* output);
+    // GPU Backward Pass
+    void backwardGPU(float* grad_input, float* grad_output);
 };
 
 #endif // LOSS_H
