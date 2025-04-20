@@ -31,7 +31,6 @@ int main(int argc, char** argv){
     std::cout << std::endl;
 
     // Forward pass
-    std::cout << "Before forward\n";
     float* output = relu->forward(input);
 
     // Print results

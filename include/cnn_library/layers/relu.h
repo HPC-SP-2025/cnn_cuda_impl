@@ -27,7 +27,7 @@ protected:  // TODO remove protected variables
     float* device_backward_buffer;
 
     // CUDA parameters
-    size_t threads_per_block = 1024;
+    size_t threads_per_block;
 
 public:
 
@@ -68,5 +68,9 @@ private:
     void backwardCpuReLU(float* grad_input, float* grad_output);
 
 };
+
+// CUDA kernel declaration
+__global__ void forwardKernelReLU(float* input, float* output, size_t output_size, size_t batch_size);
+__global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size);
 
 #endif  // RELU_H

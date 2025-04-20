@@ -8,9 +8,12 @@ ReLU::ReLU(size_t input_size, size_t output_size, size_t batch_size){
     this->input_size = input_size;
     this->output_size = output_size;
     this->batch_size = batch_size;
+    this->threads_per_block = 32;
     
     this->host_forward_buffer = (float*)malloc(sizeof(float) * this->output_size * this->batch_size);
     this->host_backward_buffer = (float*)malloc(sizeof(float) * this->input_size * this->batch_size);
+    this->device_forward_buffer = nullptr;
+    this->device_backward_buffer = nullptr;
     std::cout << "ReLU constructor call\n";
 }
 
@@ -25,26 +28,23 @@ ReLU::~ReLU(){
     std::cout << "ReLU destructor call\n";
 }
 
-// CUDA kernel declaration
-__global__ void forwardKernelReLU(float* input, float* output, size_t output_size, size_t batch_size);
-__global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size);
 
 // Forward
 float* ReLU::forward(float* input){
-    layer_input_ptr = input;
+    this->layer_input_ptr = input;
     if(!this->device){
         forwardCpuReLU(input, this->host_forward_buffer);
         return this->host_forward_buffer;
     }
     else{
-        std::cout << "Inside forward\n";
-	std::cout << threads_per_block << " " << output_size << "\n";
         size_t blocks = (output_size + threads_per_block - 1) / threads_per_block;
-	std::cout << "Blocks = " << blocks << "\n";
         forwardKernelReLU<<< blocks, threads_per_block >>>(input, this->device_forward_buffer, output_size, batch_size);
 	cudaDeviceSynchronize();
-        std::cout << "Forward kernel done\n";
-        return this->device_forward_buffer;
+	// For testing ReLU
+	cudaMemcpy(this->host_forward_buffer, this->device_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyDeviceToHost);
+        return this->host_forward_buffer;
+	//// To pass onto next layer
+	//return this->device_forward_buffer;
     }
 }
 
@@ -73,21 +73,9 @@ void ReLU::setDevice(int device){
     this->device = device;
 
     if(this->device){
-        std::cout << "Inside setDevice, device=1\n";
-        cudaError_t err = cudaMalloc((void**)&this->device_forward_buffer, sizeof(float) * output_size * batch_size);
-        if (err != cudaSuccess) {
-            std::cerr << "cudaMalloc failed for device_forward_buffer: " << cudaGetErrorString(err) << std::endl;
-        }
-	else{
-	    std::cout << "CUDA malloc successful!\n";
-	}
+        cudaMalloc((void**)&this->device_forward_buffer, sizeof(float) * output_size * batch_size);
         cudaMalloc((void**)&this->device_backward_buffer, sizeof(float) * input_size * batch_size);
-        cudaError_t merr = cudaMemcpy(this->device_forward_buffer, this->host_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyHostToDevice);
-	if (merr != cudaSuccess) {
-    std::cerr << "cudaMemcpy failed (host to device): " << cudaGetErrorString(err) << std::endl;
-    // Handle error if needed (e.g., exit or return from function)
-}
-else { std::cout << "CUDA mem copy successful!\n"; }
+        cudaMemcpy(this->device_forward_buffer, this->host_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyHostToDevice);
         cudaMemcpy(this->device_backward_buffer, this->host_backward_buffer, sizeof(float)*input_size*batch_size, cudaMemcpyHostToDevice);
     }
 }
