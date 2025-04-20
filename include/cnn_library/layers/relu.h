@@ -11,7 +11,8 @@ protected:  // TODO remove protected variables
     size_t input_size;
     size_t output_size;
     size_t batch_size;
-    size_t threads_per_block;
+
+    // Input buffer
     float* layer_input_ptr;
 
     // Forward Buffer
@@ -23,7 +24,7 @@ protected:  // TODO remove protected variables
     float* device_backward_buffer;
 
     // CUDA parameters
-    int threads_per_block;
+    size_t threads_per_block;
 
 public:
 
@@ -34,7 +35,7 @@ public:
     ~ReLU();
 
     // Forward pass override
-    void forward(float* input, float* output) override;
+    float* forward(float* input) override;
 
     // Backward pass override
     void backward(float* grad_input, float* grad_output, float* layer_input_ptr) override;
