@@ -9,10 +9,11 @@ int main(int charc, char** argv){
     size_t input_size = std::stoi(argv[1]);
     size_t output_size = std::stoi(argv[2]);
     size_t batch_size = std::stoi(argv[3]);
+    int device = std::stoi(argv[4]);
 
     // Create ReLU layer
     ReLU* relu = new ReLU(input_size, output_size, batch_size);
-    relu->setDevice(0);
+    relu->setDevice(device);
 
     // Input buffer
     float* input = (float*)malloc(sizeof(float)*input_size);
