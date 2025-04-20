@@ -2,6 +2,7 @@
 #define LINEAR_H
 
 #include <vector>
+#include <random>
 # include "../layers/base_layer.h"
 
 class Linear : public Layer {
@@ -51,6 +52,24 @@ public:
 
     // Get output size
     size_t getOutputSize() override;
+
+    // Number of weights
+    size_t numParams() override;
+
+    // Name of the layer
+    std::string getLayerName() override;
+
+    //Get device
+    int getDevice() override;
+
+    // Initialize weights
+    void initializeWeights() override;
+    
+    // Initialize biases
+    void initializeBiases() override;
+
+    // Update weights
+    void updateParameters(float learning_rate) override;
 
 private:
 

@@ -49,7 +49,6 @@ Linear::Linear(size_t input_size, size_t output_size, size_t batch_size) {
 // Destructor
 Linear::~Linear() {
     // Free host memory
-    // Free host memory
     delete[] host_weights;
     delete[] host_biases;
     delete[] host_grad_weights;
@@ -59,7 +58,7 @@ Linear::~Linear() {
     delete[] cached_input;
 
     if (device) {
-        //TODO: Free CUDA memory
+        // TODO: Free CUDA memory
     }
 
     std::cout << "Linear layer destroyed" << std::endl;
