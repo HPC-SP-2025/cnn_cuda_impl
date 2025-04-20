@@ -16,13 +16,13 @@ module load gcc/11.3.0
 # load the nvcc for compiling cuda programs
 module load nvidia/cuda/11.8.0
 
-nvcc test_relu.cu relu.cu -Xcompiler -O3 -Xcompiler -Wall -Xptxas -O3 -std=c++17 -o relu
+nvcc test_relu.cu ../src/layers/relu.cu -Xcompiler -O3 -Xcompiler -Wall -Xptxas -O3 -std=c++17 -o relu
 
 input_size=8
 output_size=8
 threads_per_block=1024
 device=0
-for i in {0..5}
+for i in {0..0}
 do
     ./relu $input_size $output_size $threads_per_block $device
 done
