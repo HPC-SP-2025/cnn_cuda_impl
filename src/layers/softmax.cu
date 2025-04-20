@@ -14,7 +14,7 @@ Softmax::Softmax(size_t num_classes, size_t batch_size) {
     this->host_backward_buffer = (float*)malloc(sizeof(float) * this->input_size * this->batch_size);
     this->device_forward_buffer = nullptr;
     this->device_backward_buffer = nullptr;
-    cout << "Softmax constructor call\n";
+    std::cout << "Softmax constructor call\n";
 }
 
 // Destructor
@@ -25,7 +25,7 @@ Softmax::~Softmax() {
         cudaFree(device_forward_buffer);
         cudaFree(device_backward_buffer);
     }
-    cout << "Softmax destructor call\n";
+    std::cout << "Softmax destructor call\n";
 }
 
 // Forward

@@ -1,3 +1,6 @@
+#ifndef SOFTMAX_H
+#define SOFTMAX_H
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -63,3 +66,5 @@ private:
 // CUDA KERNEL IMPLEMENTATION
 __global__ void forwardKernelSoftmax(float* input, float* output, size_t num_classes, size_t batch_size);
 __global__ void backwardKernelSoftmax(float* grad_input, float* grad_output, size_t num_classes, size_t batch_size);
+
+#endif

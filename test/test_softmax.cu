@@ -43,6 +43,7 @@ int main(int argc, char** argv) {
     std::cout << "results printed" << std::endl;
 
     // Clean-up heap
+    free(input);
     delete softmax;
     std::cout << "softmax deleted" << std::endl;
 
