@@ -20,9 +20,9 @@ nvcc test_relu.cu ../src/layers/relu.cu -Xcompiler -O3 -Xcompiler -Wall -Xptxas 
 
 input_size=8
 output_size=8
-threads_per_block=1024
-device=0
+batch_size=2
+device=1
 for i in {0..0}
 do
-    ./relu $input_size $output_size $threads_per_block $device
+    ./relu $input_size $output_size $batch_size $device
 done

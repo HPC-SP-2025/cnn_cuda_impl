@@ -17,7 +17,7 @@ int main(int argc, char** argv){
     relu->setDevice(device);
 
     // Input buffer
-    float* input = (float*)malloc(sizeof(float)*input_size);
+    float* input = (float*)malloc(sizeof(float)*input_size*batch_size);
     if (!input) {
         std::cerr << "Failed to allocate input buffer.\n";
         return 1;
@@ -31,11 +31,12 @@ int main(int argc, char** argv){
     std::cout << std::endl;
 
     // Forward pass
+    std::cout << "Before forward\n";
     float* output = relu->forward(input);
 
     // Print results
     std::cout << "Outputs: ";
-    for (size_t i=0; i<input_size; i++){
+    for (size_t i=0; i<input_size*batch_size; i++){
         std::cout << output[i] << " ";
     }
     std::cout << std::endl;

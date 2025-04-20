@@ -9,8 +9,8 @@
 class ReLU : public Layer {
 
 protected:  // TODO remove protected variables
-    string layer_name; // Name of the layer
-    int device = 0; // 0 for CPU, 1 for GPU
+    string layer_name; 
+    int device = 0; 
     size_t input_size;
     size_t output_size;
     size_t batch_size;
@@ -27,7 +27,7 @@ protected:  // TODO remove protected variables
     float* device_backward_buffer;
 
     // CUDA parameters
-    size_t threads_per_block;
+    size_t threads_per_block = 1024;
 
 public:
 
