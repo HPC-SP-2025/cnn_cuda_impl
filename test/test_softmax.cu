@@ -1,51 +1,82 @@
-#include <iostream>     // std::cout
-#include <cstdlib>      // size_t, rand
-#include <string>       // std:stoi
-#include "../include/cnn_library/layers/softmax.h"
+#include <iostream>
+#include <cassert>
+#include <cmath>
+#include <vector>
+#include "../../include/cnn_library/layers/softmax.h"
 
-int main(int argc, char** argv) {
+#define EPSILON 1e-5
 
-    // Input arguments
-    size_t num_classes = std::stoi(argv[1]);
-    size_t batch_size = std::stoi(argv[2]);
-    int device = std::stoi(argv[3]);
+bool almost_equal(float a, float b, float epsilon = EPSILON) {
+    return std::fabs(a - b) < epsilon;
+}
 
-    std::cout << "Arguments assigned" << std::endl;
+void test_softmax_basic_case() {
+    std::cout << "Running test_softmax_basic_case...\n";
 
-    // Create Softmax layer
-    Softmax* softmax = new Softmax(num_classes, batch_size);
+    Softmax softmax_layer(3, 1); // 3 classes, batch size 1
 
-    std::cout << "softmax initialized" << std::endl;
+    float input[3] = {1.0f, 2.0f, 3.0f};
+    float* output = softmax_layer.forward(input);
 
-    softmax->setDevice(device);
+    // Expected softmax output
+    float sum = std::exp(1.0f - 3.0f) + std::exp(2.0f - 3.0f) + std::exp(3.0f - 3.0f);
+    float expected[3] = {
+        std::exp(1.0f - 3.0f) / sum,
+        std::exp(2.0f - 3.0f) / sum,
+        std::exp(3.0f - 3.0f) / sum,
+    };
 
-    std::cout << "device is now set" << std::endl;
-
-    // Input buffer
-    float* input = (float*)malloc(sizeof(float) * num_classes * batch_size);
-    std::cout << "input buffer allocated" << std::endl;
-    for (size_t i = 0; i < num_classes * batch_size; i++){
-        input[i] = ((float)rand() / RAND_MAX) * 6.0f - 3.0f;
-        std::cout << input[i];
+    for (int i = 0; i < 3; ++i) {
+        assert(almost_equal(output[i], expected[i]));
     }
-    std::cout << std::endl;
-    std::cout << "input buffer created" << std::endl;
 
-    // Forward pass
-    float* output = softmax->forward(input);
-    std::cout << "forward called" << std::endl;
+    std::cout << "Passed.\n";
+}
 
-    // Print results
-    for (size_t i = 0; i < num_classes * batch_size; i++){
-        std::cout << output[i];
+void test_softmax_batch_case() {
+    std::cout << "Running test_softmax_batch_case...\n";
+
+    Softmax softmax_layer(2, 2); // 2 classes, batch size 2
+
+    float input[4] = {
+        1.0f, 2.0f, // First example
+        2.0f, 1.0f  // Second example
+    };
+
+    float* output = softmax_layer.forward(input);
+
+    for (int b = 0; b < 2; ++b) {
+        float max_val = std::max(input[b * 2], input[b * 2 + 1]);
+        float sum = std::exp(input[b * 2] - max_val) + std::exp(input[b * 2 + 1] - max_val);
+        float expected0 = std::exp(input[b * 2] - max_val) / sum;
+        float expected1 = std::exp(input[b * 2 + 1] - max_val) / sum;
+
+        assert(almost_equal(output[b * 2], expected0));
+        assert(almost_equal(output[b * 2 + 1], expected1));
     }
-    std::cout << std::endl;
-    std::cout << "results printed" << std::endl;
 
-    // Clean-up heap
-    free(input);
-    delete softmax;
-    std::cout << "softmax deleted" << std::endl;
+    std::cout << "Passed.\n";
+}
 
+void test_softmax_numerical_stability() {
+    std::cout << "Running test_softmax_numerical_stability...\n";
+
+    Softmax softmax_layer(2, 1);
+
+    float input[2] = {1000.0f, 1000.0f}; // Large identical values
+    float* output = softmax_layer.forward(input);
+
+    assert(almost_equal(output[0], 0.5f));
+    assert(almost_equal(output[1], 0.5f));
+
+    std::cout << "Passed.\n";
+}
+
+int main() {
+    test_softmax_basic_case();
+    test_softmax_batch_case();
+    test_softmax_numerical_stability();
+
+    std::cout << "All tests passed.\n";
     return 0;
 }
