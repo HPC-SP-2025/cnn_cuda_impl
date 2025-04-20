@@ -9,8 +9,8 @@
 class ReLU : public Layer {
 
 protected:  // TODO remove protected variables
-    string layer_name; // Name of the layer
-    int device = 0; // 0 for CPU, 1 for GPU
+    string layer_name; 
+    int device = 0; 
     size_t input_size;
     size_t output_size;
     size_t batch_size;
@@ -59,10 +59,7 @@ public:
     string getLayerName() override;
 
     // Get number of parameters
-    size_t numParams() override {
-        std::cerr << "numParams() called on ReLU, which has no parameters.\n";
-        return -1;
-    }
+    size_t numParams() override;
 
 private:
 
@@ -71,5 +68,9 @@ private:
     void backwardCpuReLU(float* grad_input, float* grad_output);
 
 };
+
+// CUDA kernel declaration
+__global__ void forwardKernelReLU(float* input, float* output, size_t output_size, size_t batch_size);
+__global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size);
 
 #endif  // RELU_H

@@ -1,6 +1,7 @@
 #include <iostream>     // std::cout
 #include <cstdlib>      // size_t, rand
 #include <string>       // std::stoi
+#include <ctime>        // time
 #include "../include/cnn_library/layers/relu.h"
 
 int main(int argc, char** argv){
@@ -16,13 +17,14 @@ int main(int argc, char** argv){
     relu->setDevice(device);
 
     // Input buffer
-    float* input = (float*)malloc(sizeof(float)*input_size);
+    float* input = (float*)malloc(sizeof(float)*input_size*batch_size);
     if (!input) {
         std::cerr << "Failed to allocate input buffer.\n";
         return 1;
     }
+    std::srand(static_cast<unsigned int>(std::time(0)));
     std::cout << "Inputs: ";
-    for (size_t i=0; i<input_size; i++){
+    for (size_t i=0; i<input_size*batch_size; i++){
         input[i] = ((float)rand()/RAND_MAX) * 6.0f - 3.0f;
         std::cout << input[i] << " ";
     }
@@ -33,7 +35,7 @@ int main(int argc, char** argv){
 
     // Print results
     std::cout << "Outputs: ";
-    for (size_t i=0; i<input_size; i++){
+    for (size_t i=0; i<input_size*batch_size; i++){
         std::cout << output[i] << " ";
     }
     std::cout << std::endl;
