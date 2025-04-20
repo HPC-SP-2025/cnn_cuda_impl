@@ -10,29 +10,41 @@ int main(int argc, char** argv) {
     size_t batch_size = std::stoi(argv[2]);
     int device = std::stoi(argv[3]);
 
+    std::cout << "Arguments assigned" << std::endl;
+
     // Create Softmax layer
     Softmax* softmax = new Softmax(num_classes, batch_size);
+
+    std::cout << "softmax initialized" << std::endl;
+
     softmax->setDevice(device);
+
+    std::cout << "device is now set" << std::endl;
 
     // Input buffer
     float* input = (float*)malloc(sizeof(float) * num_classes * batch_size);
+    std::cout << "input buffer allocated" << std::endl;
     for (size_t i = 0; i < num_classes * batch_size; i++){
         input[i] = ((float)rand() / RAND_MAX) * 6.0f - 3.0f;
         std::cout << input[i];
     }
-    std::cout << endl;
+    std::cout << std::endl;
+    std::cout << "input buffer created" << std::endl;
 
     // Forward pass
     float* output = softmax->forward(input);
+    std::cout << "forward called" << std::endl;
 
     // Print results
     for (size_t i = 0; i < num_classes * batch_size; i++){
         std::cout << output[i];
     }
-    std::cout << endl;
+    std::cout << std::endl;
+    std::cout << "results printed" << std::endl;
 
     // Clean-up heap
     delete softmax;
+    std::cout << "softmax deleted" << std::endl;
 
     return 0;
 }

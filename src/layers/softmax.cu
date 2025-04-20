@@ -69,8 +69,10 @@ void Softmax::setDevice(int device) {
     }
 }
 
+int Softmax::getDevice() { return this->device; }
+
 void Softmax::forwardCpuSoftmax(float* input, float* output) {
-    for (int b = 0; b < this->batch_size; ++b) {
+    for (size_t b = 0; b < this->batch_size; ++b) {
         float* current_input = input + b * this->input_size;
         float* current_output = output + b * this->output_size;
 
@@ -78,7 +80,7 @@ void Softmax::forwardCpuSoftmax(float* input, float* output) {
         float max_val = *std::max_element(current_input, current_input + this->input_size);
 
         float sum = 0.0f;
-        for (int i = 0; i < this->output_size; ++i) {
+        for (size_t i = 0; i < this->output_size; ++i) {
             current_output[i] = exp(current_input[i] - max_val);
             sum += current_output[i];
         }
@@ -87,7 +89,7 @@ void Softmax::forwardCpuSoftmax(float* input, float* output) {
         if (sum == 0.0f) sum = 1e-6f; // TODO: Maybe define this constant globally?
 
         // Normalize
-        for (int i = 0; i < this->output_size; ++i) {
+        for (size_t i = 0; i < this->output_size; ++i) {
             current_output[i] /= sum;
         }
     }
@@ -110,10 +112,10 @@ __host__ void Softmax::backwardGpuSoftmax(float* grad_input, float* grad_output)
 //    cudaDeviceSynchronize();
 }
 
-__global__ void Softmax::forwardKernelSoftmax(float* input, float* output, size_t num_classes, size_t batch_size) {
+__global__ void forwardKernelSoftmax(float* input, float* output, size_t num_classes, size_t batch_size) {
     // TODO: Implement this kernel
 }
 
-__global__ void Softmax::backwardKernelSoftmax(float* grad_input, float* grad_output, size_t num_classes, size_t batch_size) {
+__global__ void backwardKernelSoftmax(float* grad_input, float* grad_output, size_t num_classes, size_t batch_size) {
     // TODO: Implement this kernel
 }

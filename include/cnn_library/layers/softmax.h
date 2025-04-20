@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "cnn_library/layers/base_layer.h"
+#include "base_layer.h"
 
 class Softmax : public Layer {
 
@@ -53,13 +53,13 @@ public:
 
 private:
 
-    // CUDA KERNEL IMPLEMENTATION
-    __global__ void forwardKernelSoftmax(float* input, float* output, size_t num_classes, size_t batch_size);
-    __global__ void backwardKernelSoftmax(float* grad_input, float* grad_output, size_t num_classes, size_t batch_size);
-
     // CPU IMPLEMENTATION
     void forwardCpuSoftmax(float* input, float* output);
     void backwardCpuSoftmax(float* grad_input, float* grad_output);
     __host__ void forwardGpuSoftmax(float* input, float* output);
     __host__ void backwardGpuSoftmax(float* grad_input, float* grad_output);
-}
+};
+
+// CUDA KERNEL IMPLEMENTATION
+__global__ void forwardKernelSoftmax(float* input, float* output, size_t num_classes, size_t batch_size);
+__global__ void backwardKernelSoftmax(float* grad_input, float* grad_output, size_t num_classes, size_t batch_size);
