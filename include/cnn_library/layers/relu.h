@@ -59,10 +59,7 @@ public:
     string getLayerName() override;
 
     // Get number of parameters
-    size_t numParams() override {
-        std::cerr << "numParams() called on ReLU, which has no parameters.\n";
-        return -1;
-    }
+    size_t numParams() override;
 
 private:
 
