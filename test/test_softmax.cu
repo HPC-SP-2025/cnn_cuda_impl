@@ -2,7 +2,7 @@
 #include <cassert>
 #include <cmath>
 #include <vector>
-#include "../../include/cnn_library/layers/softmax.h"
+#include "../include/cnn_library/layers/softmax.h"
 
 #define EPSILON 1e-5
 
