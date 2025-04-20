@@ -31,8 +31,8 @@ Softmax::~Softmax() {
 // Forward
 float* Softmax::forward(float* input) {
     if (!device) {
-        forwardCpuSoftmax(input, host_forward_buffer);
-        return host_forward_buffer;
+        forwardCpuSoftmax(input, this->host_forward_buffer);
+        return this->host_forward_buffer;
     }
     else {
         forwardGpuSoftmax(input, this->device_forward_buffer);
