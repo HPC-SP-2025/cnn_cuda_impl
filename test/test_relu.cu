@@ -1,9 +1,9 @@
 #include <iostream>     // std::cout
 #include <cstdlib>      // size_t, rand
-#include <string>       // std:stoi
+#include <string>       // std::stoi
 #include "../include/cnn_library/layers/relu.h"
 
-int main(int charc, char** argv){
+int main(int argc, char** argv){
 
     // Input arguments
     size_t input_size = std::stoi(argv[1]);
@@ -17,22 +17,29 @@ int main(int charc, char** argv){
 
     // Input buffer
     float* input = (float*)malloc(sizeof(float)*input_size);
+    if (!input) {
+        std::cerr << "Failed to allocate input buffer.\n";
+        return 1;
+    }
+    std::cout << "Inputs: ";
     for (size_t i=0; i<input_size; i++){
         input[i] = ((float)rand()/RAND_MAX) * 6.0f - 3.0f;
-        std::cout << input[i];
+        std::cout << input[i] << " ";
     }
-    std::cout << endl;
+    std::cout << std::endl;
 
     // Forward pass
     float* output = relu->forward(input);
 
     // Print results
+    std::cout << "Outputs: ";
     for (size_t i=0; i<input_size; i++){
-        std::cout << output[i];
+        std::cout << output[i] << " ";
     }
-    std::cout << endl;
+    std::cout << std::endl;
 
     // Clean-up heap
+    free(input);
     delete relu;
 
     return 0;
