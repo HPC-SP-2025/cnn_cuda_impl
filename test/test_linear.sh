@@ -15,6 +15,6 @@ module load gcc/11.3.0
 # load the nvcc for compiling cuda programs
 module load nvidia/cuda/11.8.0
 
-nvcc test_linear1.cu ../src/layers/linear.cu -Xcompiler -O3 -Xcompiler -Wzero-as-null-pointer-constant -Xptxas -O3 -std=c++17 -o linear
+nvcc test_linear.cu ../src/layers/linear.cu -Xcompiler -O3 -Xcompiler -Wzero-as-null-pointer-constant -Xptxas -O3 -std=c++17 -o linear
 
 ./linear 10 5 1 0

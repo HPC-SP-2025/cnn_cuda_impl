@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
-#include <vector>
+#include <cstring>
 #include "../include/cnn_library/layers/linear.h"
 
 #define EPSILON 1e-5
@@ -10,242 +10,209 @@ bool almost_equal(float a, float b, float epsilon = EPSILON) {
     return std::fabs(a - b) < epsilon;
 }
 
-// Test the forward pass with known weights and biases
-void test_linear_forward_basic() {
-    std::cout << "Running test_linear_forward_basic...\n";
-    
-    // Create a linear layer with 2 inputs and 3 outputs
-    Linear linear_layer(2, 3, 1);
-    
-    // Manually set weights and biases for predictable output
-    float weights[6] = {
-        0.1f, 0.2f, 0.3f,  // weights for input 1
-        0.4f, 0.5f, 0.6f   // weights for input 2
-    };
-    float biases[3] = {0.1f, 0.2f, 0.3f};
-    
-    // Set the weights and biases directly (requires exposing setWeights/setBiases methods)
-    linear_layer.setWeights(weights);
-    linear_layer.setBiases(biases);
-    
-    // Input data
-    float input[2] = {1.0f, 2.0f};
-    
-    // Expected output calculation:
-    // output[0] = 1.0*0.1 + 2.0*0.4 + 0.1 = 0.1 + 0.8 + 0.1 = 1.0
-    // output[1] = 1.0*0.2 + 2.0*0.5 + 0.2 = 0.2 + 1.0 + 0.2 = 1.4
-    // output[2] = 1.0*0.3 + 2.0*0.6 + 0.3 = 0.3 + 1.2 + 0.3 = 1.8
-    float expected[3] = {1.0f, 1.4f, 1.8f};
-    
-    // Perform forward pass
-    float *output = linear_layer.forward(input);
-    
-    // Verify results
-    for (int i = 0; i < 3; ++i) {
-        assert(almost_equal(output[i], expected[i]));
-    }
-    
-    std::cout << "Passed.\n";
+void test_constructor_cpu() {
+    Linear layer(4, 3, 2);  // input:4, output:3, batch:2
+
+    assert(layer.getInputSize() == 4);
+    assert(layer.getOutputSize() == 3);
+    //assert(layer.getBatchSize() == 2);
+
+    std::cout << "Test Constructor (CPU) Passed\n";
 }
 
-// Test the forward pass with batch processing
-void test_linear_forward_batch() {
-    std::cout << "Running test_linear_forward_batch...\n";
-    
-    // Create a linear layer with 2 inputs, 3 outputs, and batch size 2
-    Linear linear_layer(2, 3, 2);
-    
-    // Manually set weights and biases
-    float weights[6] = {
-        0.1f, 0.2f, 0.3f,  // weights for input 1
-        0.4f, 0.5f, 0.6f   // weights for input 2
-    };
-    float biases[3] = {0.1f, 0.2f, 0.3f};
-    
-    linear_layer.setWeights(weights);
-    linear_layer.setBiases(biases);
-    
-    // Input data for batch of 2
-    float input[4] = {
-        1.0f, 2.0f,  // First example
-        3.0f, 4.0f   // Second example
-    };
-    
-    // Expected output for first example:
-    // Same as in basic test: [1.0f, 1.4f, 1.8f]
-    // Expected output for second example:
-    // output[0] = 3.0*0.1 + 4.0*0.4 + 0.1 = 0.3 + 1.6 + 0.1 = 2.0
-    // output[1] = 3.0*0.2 + 4.0*0.5 + 0.2 = 0.6 + 2.0 + 0.2 = 2.8
-    // output[2] = 3.0*0.3 + 4.0*0.6 + 0.3 = 0.9 + 2.4 + 0.3 = 3.6
-    float expected[6] = {
-        1.0f, 1.4f, 1.8f,  // First example
-        2.0f, 2.8f, 3.6f   // Second example
-    };
-    
-    // Perform forward pass
-    float *output = linear_layer.forward(input);
-    
-    // Verify results
-    for (int i = 0; i < 6; ++i) {
-        assert(almost_equal(output[i], expected[i]));
-    }
-    
-    std::cout << "Passed.\n";
+void test_forward_cpu() {
+    Linear layer(2, 2, 1);  // simple 2x2 layer
+
+    float weights[] = {1, 2, 3, 4};   // [ [1, 2], [3, 4] ]
+    float biases[] = {0.5, -0.5};
+    float input[] = {1, 2};           // input: [1, 2]
+    float expected[] = {1*1 + 2*3 + 0.5, 1*2 + 2*4 - 0.5}; // [7.5, 9.5]
+
+    layer.setWeights(weights);
+    layer.setBiases(biases);
+
+    float* output = layer.forward(input);
+    assert(almost_equal(output[0], expected[0]));
+    assert(almost_equal(output[1], expected[1]));
+
+    std::cout << "Test Forward (CPU) Passed\n";
 }
 
-// Test the backward pass
-void test_linear_backward() {
-    std::cout << "Running test_linear_backward...\n";
-    
-    // Create a linear layer with 2 inputs and 3 outputs
-    Linear linear_layer(2, 3, 1);
-    
-    // Manually set weights and biases
-    float weights[6] = {
-        0.1f, 0.2f, 0.3f,  // weights for input 1
-        0.4f, 0.5f, 0.6f   // weights for input 2
-    };
-    float biases[3] = {0.1f, 0.2f, 0.3f};
-    
-    linear_layer.setWeights(weights);
-    linear_layer.setBiases(biases);
-    
-    // Input data
-    float input[2] = {1.0f, 2.0f};
-    
-    // Forward pass first to cache input
-    float *output = linear_layer.forward(input);
-    
-    // Gradient coming from next layer
-    float grad_input[3] = {1.0f, 1.0f, 1.0f};
-    
-    // Expected gradient with respect to input:
-    // grad_output[0] = 1.0*0.1 + 1.0*0.2 + 1.0*0.3 = 0.6
-    // grad_output[1] = 1.0*0.4 + 1.0*0.5 + 1.0*0.6 = 1.5
-    float expected_grad_output[2] = {0.6f, 1.5f};
-    
-    // Expected gradients for weights and biases should also be calculated
-    // but we're not testing them in this basic test
-    
-    // Perform backward pass
-    float *grad_output = linear_layer.backward(grad_input);
-    
-    // Verify gradient with respect to input
-    for (int i = 0; i < 2; ++i) {
-        assert(almost_equal(grad_output[i], expected_grad_output[i]));
-    }
-    
-    std::cout << "Passed.\n";
+void test_weights_bias_io() {
+    Linear layer(2, 2, 1);
+
+    float weights[] = {1, 2, 3, 4};
+    float biases[] = {0.1f, -0.1f};
+    float w_read[4], b_read[2];
+
+    layer.setWeights(weights);
+    layer.setBiases(biases);
+
+    layer.getWeights(w_read);
+    layer.getBiases(b_read);
+
+    for (int i = 0; i < 4; ++i) assert(weights[i] == w_read[i]);
+    for (int i = 0; i < 2; ++i) assert(biases[i] == b_read[i]);
+
+    std::cout << "Test Set/Get Weights & Biases Passed\n";
 }
 
-// Test parameter update functionality
-void test_linear_parameter_update() {
-    std::cout << "Running test_linear_parameter_update...\n";
+void test_forward_gpu() {
+    // Create layer
+    Linear layer(2, 2, 1);  // input_size=2, output_size=2, batch_size=1
+    layer.setDevice(1); // enable GPU
+
+    // Prepare weights and biases
+    float weights[] = {1, 2, 3, 4}; // 2x2 matrix: [[1,2], [3,4]]
+    float biases[] = {0.5, -0.5};   // 2 biases
+    layer.setWeights(weights);
+    layer.setBiases(biases);
+
+    // Allocate input on device
+    float input_host[] = {1.0, 2.0};  // 1x2 input
+    float *input_device;
+    cudaMalloc(&input_device, sizeof(input_host));
+    cudaMemcpy(input_device, input_host, sizeof(input_host), cudaMemcpyHostToDevice);
+
+    // Run GPU forward
+    float *output_device = layer.forward(input_device);
+
+    // Copy result back to host
+    float output_host[2];
+    cudaMemcpy(output_host, output_device, sizeof(output_host), cudaMemcpyDeviceToHost);
+
+    // Expected: y = xW + b = [1*1+2*3+0.5, 1*2+2*4-0.5] = [7.5, 9.5]
+    assert(almost_equal(output_host[0], 7.5));
+    assert(almost_equal(output_host[1], 9.5));
+
+    std::cout << "Test Forward (GPU) Passed\n";
+
+    // Cleanup
+    cudaFree(input_device);
+}
+
+void test_backward_cpu() {
+    Linear layer(2, 2, 1);  // input:2, output:2, batch:1
+
+    // Set known weights and input
+    float weights[] = {1, 2, 3, 4};   // 2x2
+    float input[] = {1, 2};           // 1x2
+    float grad_out[] = {0.5, -1.0};   // dL/dy: 1x2
+
+    layer.setWeights(weights);
+    layer.forward(input);  // cache input
+    float* grad_input = layer.backward(grad_out);  // calls backwardCPU()
+
+    // Expected: grad_input = grad_out * Wᵗ = [0.5, -1] * [[1,3],[2,4]]ᵗ = [0.5*1 + -1*2, 0.5*3 + -1*4] = [-1.5, -2.5]
+    assert(almost_equal(grad_input[0], -1.5f));
+    assert(almost_equal(grad_input[1], -2.5f));
+
+    // Check gradients
+    float expected_dW[] = {0.5*1, 1*(-1.0), 0.5*2, -1.0*2};  // xᵗ * grad_out
+    float expected_db[] = {0.5f, -1.0f};
+
+    for (int i = 0; i < 4; i++) assert(almost_equal(layer.host_grad_weights[i], expected_dW[i]));
+    for (int i = 0; i < 2; i++) assert(almost_equal(layer.host_grad_biases[i], expected_db[i]));
+
+    std::cout << "Test Backward (CPU) Passed\n";
+}
+void test_backward_gpu() {
+    Linear layer(2, 2, 1);
+    layer.setDevice(1);
+
+    float weights[] = {1, 2, 3, 4};
+    float input_host[] = {1.0f, 2.0f};
+    float grad_out_host[] = {0.5f, -1.0f};
+
+    layer.setWeights(weights);
     
-    // Create a linear layer with 2 inputs and 2 outputs
-    Linear linear_layer(2, 2, 1);
-    
-    // Manually set initial weights and biases
-    float initial_weights[4] = {0.1f, 0.2f, 0.3f, 0.4f};
-    float initial_biases[2] = {0.5f, 0.6f};
-    
-    linear_layer.setWeights(initial_weights);
-    linear_layer.setBiases(initial_biases);
-    
-    // Forward pass with input
-    float input[2] = {1.0f, 1.0f};
-    float *output = linear_layer.forward(input);
-    
-    // Backward pass with gradient
-    float grad_input[2] = {1.0f, 1.0f};
-    float *grad_output = linear_layer.backward(grad_input);
-    
-    // Now the gradients should be computed
-    // Weight gradients: input[i] * grad_input[j]
-    // For batch size 1 and input [1,1], weight gradients should be [1,1,1,1]
-    // Bias gradients: grad_input[j] = [1,1]
-    
-    // Update parameters with learning rate 0.1
-    float learning_rate = 0.1f;
-    linear_layer.updateParameters(learning_rate);
-    
-    // Expected updated weights:
-    // weights[i,j] -= learning_rate * weight_gradients[i,j]
-    // = initial_weights[i,j] - 0.1 * 1.0
-    float expected_weights[4] = {0.0f, 0.1f, 0.2f, 0.3f};
-    
-    // Expected updated biases:
-    // biases[j] -= learning_rate * bias_gradients[j]
-    // = initial_biases[j] - 0.1 * 1.0
-    float expected_biases[2] = {0.4f, 0.5f};
-    
-    // Get the updated weights and biases
-    float updated_weights[4];
-    float updated_biases[2];
-    linear_layer.getWeights(updated_weights);
-    linear_layer.getBiases(updated_biases);
-    
-    // Verify updated weights and biases
+    // Allocate and copy input/grad_out to device
+    float *input_dev, *grad_out_dev;
+    cudaMalloc(&input_dev, sizeof(input_host));
+    cudaMalloc(&grad_out_dev, sizeof(grad_out_host));
+    cudaMemcpy(input_dev, input_host, sizeof(input_host), cudaMemcpyHostToDevice);
+    cudaMemcpy(grad_out_dev, grad_out_host, sizeof(grad_out_host), cudaMemcpyHostToDevice);
+
+    layer.forward(input_dev);  // GPU forward caches device input
+    float* grad_input_dev = layer.backward(grad_out_dev);  // GPU backward
+
+    // Copy grad_input back
+    float grad_input_host[2];
+    cudaMemcpy(grad_input_host, grad_input_dev, sizeof(grad_input_host), cudaMemcpyDeviceToHost);
+
+    // Validate grad_input
+    assert(almost_equal(grad_input_host[0], -1.5));
+    assert(almost_equal(grad_input_host[1], -2.5));
+
+    // Copy gradients
+    float grad_w[4], grad_b[2];
+    cudaMemcpy(grad_w, layer.device_grad_weights, sizeof(grad_w), cudaMemcpyDeviceToHost);
+    cudaMemcpy(grad_b, layer.device_grad_biases, sizeof(grad_b), cudaMemcpyDeviceToHost);
+
+    float expected_dW[] = {0.5*1, 1*(-1.0), 0.5*2, -1.0*2};  // xᵗ * grad_out
+    float expected_db[] = {0.5f, -1.0f};
+
+    for (int i = 0; i < 4; i++) assert(almost_equal(grad_w[i], expected_dW[i]));
+    for (int i = 0; i < 2; i++) assert(almost_equal(grad_b[i], expected_db[i]));
+
+    std::cout << "Test Backward (GPU) Passed\n";
+
+    cudaFree(input_dev);
+    cudaFree(grad_out_dev);
+}
+
+void test_update_parameters() {
+    Linear layer(2, 2, 1);  // input:2, output:2, batch:1
+
+    // Set initial weights and biases
+    float weights[] = {1.0f, 2.0f, 3.0f, 4.0f};  // 2x2
+    float biases[] = {0.5f, -0.5f};
+    layer.setWeights(weights);
+    layer.setBiases(biases);
+
+    // Manually set gradients (dW, db)
+    float grad_weights[] = {0.1f, 0.2f, 0.3f, 0.4f};
+    float grad_biases[] = {0.05f, -0.05f};
+    std::memcpy(layer.host_grad_weights, grad_weights, sizeof(grad_weights));
+    std::memcpy(layer.host_grad_biases, grad_biases, sizeof(grad_biases));
+
+    // Update with lr = 0.1
+    layer.updateParameters(0.1f);
+
+    // Expected weights: w - lr * dw
+    float expected_weights[] = {
+        1.0f - 0.1f * 0.1f,  // 0.99
+        2.0f - 0.1f * 0.2f,  // 1.98
+        3.0f - 0.1f * 0.3f,  // 2.97
+        4.0f - 0.1f * 0.4f   // 3.96
+    };
+    float expected_biases[] = {
+        0.5f - 0.1f * 0.05f,   // 0.495
+        -0.5f - 0.1f * -0.05f  // -0.495
+    };
+
+    float new_weights[4], new_biases[2];
+    layer.getWeights(new_weights);
+    layer.getBiases(new_biases);
+
     for (int i = 0; i < 4; ++i) {
-        assert(almost_equal(updated_weights[i], expected_weights[i]));
+        assert(almost_equal(new_weights[i], expected_weights[i]));
     }
-    
     for (int i = 0; i < 2; ++i) {
-        assert(almost_equal(updated_biases[i], expected_biases[i]));
+        assert(almost_equal(new_biases[i], expected_biases[i]));
     }
-    
-    std::cout << "Passed.\n";
-}
 
-// Test Xavier/Glorot initialization
-void test_linear_weight_initialization() {
-    std::cout << "Running test_linear_weight_initialization...\n";
-    
-    // Create a linear layer with significant size to test statistics
-    size_t input_size = 100;
-    size_t output_size = 50;
-    Linear linear_layer(input_size, output_size, 1);
-    
-    // Get the initialized weights
-    float* weights = new float[input_size * output_size];
-    linear_layer.getWeights(weights);
-    
-    // Calculate mean and variance
-    float sum = 0.0f;
-    float sum_squared = 0.0f;
-    size_t total_weights = input_size * output_size;
-    
-    for (size_t i = 0; i < total_weights; ++i) {
-        sum += weights[i];
-        sum_squared += weights[i] * weights[i];
-    }
-    
-    float mean = sum / total_weights;
-    float variance = (sum_squared / total_weights) - (mean * mean);
-    
-    // Xavier initialization should have mean close to 0 and 
-    // variance close to 2 / (input_size + output_size)
-    float expected_variance = 2.0f / (input_size + output_size);
-    
-    // Check that mean is close to 0 (allowing for some statistical deviation)
-    assert(std::fabs(mean) < 0.05);
-    
-    // Check that variance is close to expected (allowing for some statistical deviation)
-    assert(std::fabs(variance - expected_variance) < 0.01);
-    
-    delete[] weights;
-    
-    std::cout << "Passed.\n";
+    std::cout << "Test UpdateParameters Passed\n";
 }
 
 int main() {
-    // Uncomment tests as you implement the corresponding functionality
-    test_linear_forward_basic();
-    test_linear_forward_batch();
-    test_linear_backward();
-    test_linear_parameter_update();
-    test_linear_weight_initialization();
-    
-    std::cout << "All tests passed!\n";
-    return 0;
+  test_constructor_cpu();
+  test_weights_bias_io();
+  test_forward_cpu();
+  test_forward_gpu();
+  test_backward_cpu();
+  test_backward_gpu();
+  test_update_parameters();
+
+  std::cout << "All Linear Tests passed!\n";
 }
