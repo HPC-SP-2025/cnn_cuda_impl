@@ -2,6 +2,22 @@
 #include <iostream>
 #include <string>
 
+// GPU forward implementation
+__global__ void forwardKernelReLU(float* input, float* output, size_t output_size, size_t batch_size){
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < output_size*batch_size) {
+        output[idx] = fmaxf(input[idx],0.0f);
+    }
+} 
+
+// GPU backward implementation
+__global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size){
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < input_size*batch_size) {
+        grad_output[idx] = (layer_input_ptr[idx] > 0) ? grad_input[idx] : 0.0f;
+    }
+} 
+
 // Constructor
 ReLU::ReLU(size_t input_size, size_t output_size, size_t batch_size){   
     this->layer_name = "ReLU";
@@ -98,18 +114,4 @@ void ReLU::backwardCpuReLU(float* grad_input, float* grad_output){
     }
 }
 
-// GPU forward implementation
-__global__ void forwardKernelReLU(float* input, float* output, size_t output_size, size_t batch_size){
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < output_size*batch_size) {
-        output[idx] = fmaxf(input[idx],0.0f);
-    }
-} 
 
-// GPU backward implementation
-__global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size){
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < input_size*batch_size) {
-        grad_output[idx] = (layer_input_ptr[idx] > 0) ? grad_input[idx] : 0.0f;
-    }
-} 

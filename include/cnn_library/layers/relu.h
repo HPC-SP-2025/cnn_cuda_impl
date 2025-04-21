@@ -70,7 +70,7 @@ private:
 };
 
 // CUDA kernel declaration
-__global__ void forwardKernelReLU(float* input, float* output, size_t output_size, size_t batch_size);
-__global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size);
+// __global__ void forwardKernelReLU(float* input, float* output, size_t output_size, size_t batch_size);
+// __global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size);
 
 #endif  // RELU_H

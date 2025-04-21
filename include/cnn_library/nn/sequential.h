@@ -27,7 +27,7 @@ class Sequential {
     void setDevice(int device);
 
     // Forward pass
-    void forward(float *input, float *output);
+    float* forward(float *input);
 
     // Backward pass
     float backward(float *prediected, float *ground_truth, Loss *loss);

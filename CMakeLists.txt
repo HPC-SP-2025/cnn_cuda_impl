@@ -8,7 +8,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-file(GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/layers/relu.cu)
+file(GLOB SRC_FILES 
+  ${CMAKE_SOURCE_DIR}/src/layers/relu.cu
+  ${CMAKE_SOURCE_DIR}/src/nn/sequential.cpp
+  ${CMAKE_SOURCE_DIR}/src/layers/softmax.cu
+)
 list(APPEND SOURCES ${SRC_FILES})
 
 list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/test/test_sequential.cpp)

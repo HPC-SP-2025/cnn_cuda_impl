@@ -3,6 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
+
+
 // Constructor
 Softmax::Softmax(size_t num_classes, size_t batch_size) {
     this->layer_name = "Softmax";
@@ -100,18 +102,19 @@ void Softmax::backwardCpuSoftmax(float* grad_input, float* grad_output) {
     // Jacobian (N x N) * grad_input (N x 1) = grad_output (N x 1)
 }
 
-__host__ void Softmax::forwardGpuSoftmax(float* input, float* output) {
-//    size_t blocks = (this->output_size + this->threads_per_block - 1) / this->threads_per_block;
-//    forwardKernelSoftmax<<<blocks, this->threads_per_block>>>(input, this->device_forward_buffer);
-//    cudaDeviceSynchronize();
-}
 
-__host__ void Softmax::backwardGpuSoftmax(float* grad_input, float* grad_output) {
-//    size_t blocks = (this->input_size + this->threads_per_block - 1) / this->threads_per_block;
-//    backwardKernelSoftmax<<<blocks, this->threads_per_block>>>(grad_input, this->device_backward_buffer);
-//    cudaDeviceSynchronize();
-}
+void Softmax::forwardGpuSoftmax(float* input, float* output) {
+    //    size_t blocks = (this->output_size + this->threads_per_block - 1) / this->threads_per_block;
+    //    forwardKernelSoftmax<<<blocks, this->threads_per_block>>>(input, this->device_forward_buffer);
+    //    cudaDeviceSynchronize();
+    }
 
+void Softmax::backwardGpuSoftmax(float* grad_input, float* grad_output) {
+    //    size_t blocks = (this->input_size + this->threads_per_block - 1) / this->threads_per_block;
+    //    backwardKernelSoftmax<<<blocks, this->threads_per_block>>>(grad_input, this->device_backward_buffer);
+    //    cudaDeviceSynchronize();
+    }
+    
 __global__ void forwardKernelSoftmax(float* input, float* output, size_t num_classes, size_t batch_size) {
     // TODO: Implement this kernel
 }
@@ -119,3 +122,5 @@ __global__ void forwardKernelSoftmax(float* input, float* output, size_t num_cla
 __global__ void backwardKernelSoftmax(float* grad_input, float* grad_output, size_t num_classes, size_t batch_size) {
     // TODO: Implement this kernel
 }
+
+
