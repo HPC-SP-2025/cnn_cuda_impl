@@ -26,15 +26,14 @@ void test_forward_cpu() {
     float weights[] = {1, 2, 3, 4};   // [ [1, 2], [3, 4] ]
     float biases[] = {0.5, -0.5};
     float input[] = {1, 2};           // input: [1, 2]
-    float expected[] = {1*1 + 2*3 + 0.5, 1*2 + 2*4 - 0.5}; // [7.5, 11.5]
+    float expected[] = {1*1 + 2*3 + 0.5, 1*2 + 2*4 - 0.5}; // [7.5, 9.5]
 
     layer.setWeights(weights);
     layer.setBiases(biases);
 
     float* output = layer.forward(input);
-    assert(almost_equal(output[0], 7.5f));
-    assert(almost_equal(output[1], 11.5f));
-
+    assert(almost_equal(output[0], expected[0]));
+    assert(almost_equal(output[1], expected[1]));
 
     std::cout << "Test Forward (CPU) Passed\n";
 }
