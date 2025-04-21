@@ -1,0 +1,101 @@
+#include <iostream>
+#include <cassert>
+#include <cmath>
+#include <vector>
+#include "../include/cnn_library/layers/linear.h"
+
+#define EPSILON 1e-5
+
+bool almost_equal(float a, float b, float epsilon = EPSILON) {
+    return std::fabs(a - b) < epsilon;
+}
+
+void test_constructor_cpu() {
+    Linear layer(4, 3, 2);  // input:4, output:3, batch:2
+
+    assert(layer.getInputSize() == 4);
+    assert(layer.getOutputSize() == 3);
+    //assert(layer.getBatchSize() == 2);
+
+    std::cout << "Test Constructor (CPU) Passed\n";
+}
+
+void test_forward_cpu() {
+    Linear layer(2, 2, 1);  // simple 2x2 layer
+
+    float weights[] = {1, 2, 3, 4};   // [ [1, 2], [3, 4] ]
+    float biases[] = {0.5, -0.5};
+    float input[] = {1, 2};           // input: [1, 2]
+    float expected[] = {1*1 + 2*3 + 0.5, 1*2 + 2*4 - 0.5}; // [7.5, 11.5]
+
+    layer.setWeights(weights);
+    layer.setBiases(biases);
+
+    float* output = layer.forward(input);
+    assert(almost_equal(output[0], 7.5f));
+    assert(almost_equal(output[1], 11.5f));
+
+
+    std::cout << "Test Forward (CPU) Passed\n";
+}
+
+void test_weights_bias_io() {
+    Linear layer(2, 2, 1);
+
+    float weights[] = {1, 2, 3, 4};
+    float biases[] = {0.1f, -0.1f};
+    float w_read[4], b_read[2];
+
+    layer.setWeights(weights);
+    layer.setBiases(biases);
+
+    layer.getWeights(w_read);
+    layer.getBiases(b_read);
+
+    for (int i = 0; i < 4; ++i) assert(weights[i] == w_read[i]);
+    for (int i = 0; i < 2; ++i) assert(biases[i] == b_read[i]);
+
+    std::cout << "Test Set/Get Weights & Biases Passed\n";
+}
+
+void test_forward_gpu() {
+    // Create layer
+    Linear layer(2, 2, 1);  // input_size=2, output_size=2, batch_size=1
+    layer.setDevice(1); // enable GPU
+
+    // Prepare weights and biases
+    float weights[] = {1, 2, 3, 4}; // 2x2 matrix: [[1,2], [3,4]]
+    float biases[] = {0.5, -0.5};   // 2 biases
+    layer.setWeights(weights);
+    layer.setBiases(biases);
+
+    // Allocate input on device
+    float input_host[] = {1.0, 2.0};  // 1x2 input
+    float *input_device;
+    cudaMalloc(&input_device, sizeof(input_host));
+    cudaMemcpy(input_device, input_host, sizeof(input_host), cudaMemcpyHostToDevice);
+
+    // Run GPU forward
+    float *output_device = layer.forward(input_device);
+
+    // Copy result back to host
+    float output_host[2];
+    cudaMemcpy(output_host, output_device, sizeof(output_host), cudaMemcpyDeviceToHost);
+
+    // Expected: y = xW + b = [1*1+2*3+0.5, 1*2+2*4-0.5] = [7.5, 9.5]
+    assert(almost_equal(output_host[0], 7.5));
+    assert(almost_equal(output_host[1], 9.5));
+
+    std::cout << "Test Forward (GPU) Passed\n";
+
+    // Cleanup
+    cudaFree(input_device);
+}
+
+int main() {
+  test_constructor_cpu();
+  test_forward_cpu();
+  test_weights_bias_io();
+
+  std::cout << "Linear Tests passed!\n";
+}
