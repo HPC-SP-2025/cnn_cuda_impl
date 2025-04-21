@@ -36,6 +36,8 @@ float* Softmax::forward(float* input) {
     }
     else {
         forwardGpuSoftmax(input, this->device_forward_buffer);
+        // TODO: See how to use the line below for testing
+		// cudaMemcpy(this->host_forward_buffer, this->device_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyDeviceToHost);
         return this->device_forward_buffer;
     }
 }
@@ -48,6 +50,8 @@ float* Softmax::backward(float* grad_input) {
     }
     else {
         backwardGpuSoftmax(grad_input, this->device_backward_buffer);
+        // TODO: See how to use the line below for testing
+        // cudaMemcpy(this->host_backward_buffer, this->device_backward_buffer, sizeof(float)*input_size*batch_size, cudaMemcpyDeviceToHost);
         return this->device_backward_buffer;
     }
 }
@@ -96,19 +100,37 @@ void Softmax::forwardCpuSoftmax(float* input, float* output) {
 }
 
 void Softmax::backwardCpuSoftmax(float* grad_input, float* grad_output) {
-    // TODO: Implement this method
-    // Jacobian (N x N) * grad_input (N x 1) = grad_output (N x 1)
+    for (size_t b = 0; b < this->batch_size; ++b) {
+        float* grad_in = grad_input + b * this->output_size;
+        float* grad_out = grad_output + b * this->input_size;
+
+        float* softmax_out = this->host_forward_buffer + b * this->output_size;
+
+        // Compute Jacobian * grad_input
+        for (size_t i = 0; i < this->input_size; ++i) {
+            grad_out[i] = 0.0f;
+            for (size_t j = 0; j < this->input_size; ++j) {
+                float jacobian_ij = 0.0f;
+                if (i == j) {
+                    jacobian_ij = softmax_out[i] * (1.0f - softmax_out[i]);
+                } else {
+                    jacobian_ij = -softmax_out[i] * softmax_out[j];
+                }
+                grad_out[i] += jacobian_ij * grad_in[j];
+            }
+        }
+    }
 }
 
 __host__ void Softmax::forwardGpuSoftmax(float* input, float* output) {
 //    size_t blocks = (this->output_size + this->threads_per_block - 1) / this->threads_per_block;
-//    forwardKernelSoftmax<<<blocks, this->threads_per_block>>>(input, this->device_forward_buffer);
+//    forwardKernelSoftmax<<<blocks, this->threads_per_block>>>(input, output, this->output_size, this->batch_size);
 //    cudaDeviceSynchronize();
 }
 
 __host__ void Softmax::backwardGpuSoftmax(float* grad_input, float* grad_output) {
 //    size_t blocks = (this->input_size + this->threads_per_block - 1) / this->threads_per_block;
-//    backwardKernelSoftmax<<<blocks, this->threads_per_block>>>(grad_input, this->device_backward_buffer);
+//    backwardKernelSoftmax<<<blocks, this->threads_per_block>>>(grad_input, grad_output, this->input_size, this->batch_size);
 //    cudaDeviceSynchronize();
 }
 
