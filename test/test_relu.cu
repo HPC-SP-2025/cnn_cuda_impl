@@ -17,6 +17,7 @@ int main(int argc, char** argv){
     relu->setDevice(device);
 
     // Input buffer
+    std::cout << "FORWARD PASS\n";
     float* input = (float*)malloc(sizeof(float)*input_size*batch_size);
     if (!input) {
         std::cerr << "Failed to allocate input buffer.\n";
@@ -41,6 +42,7 @@ int main(int argc, char** argv){
     std::cout << std::endl;
 
     // Input gradient buffer
+    std::cout << "BACKWARD PASS\n";
     float* grad_input = (float*)malloc(sizeof(float)*output_size*batch_size);
     if (!grad_input) {
         std::cerr << "Failed to allocate input gradient buffer.\n";
@@ -54,7 +56,7 @@ int main(int argc, char** argv){
     std::cout << std::endl;
 
     // Backward pass
-    float* grad_output = relu->forward(grad_input);
+    float* grad_output = relu->backward(grad_input);
 
     // Print output gradients
     std::cout << "Gradient Outputs: ";

@@ -93,10 +93,8 @@ void ReLU::forwardCpuReLU(float* input, float* output){
 
 // CPU backward implementation
 void ReLU::backwardCpuReLU(float* grad_input, float* grad_output){
-    float grad;
     for (size_t i=0; i<input_size*batch_size; i++){
-        grad = (layer_input_ptr[i] > 0) ? 1.0f : 0.0f;
-        grad_output[i] = grad_input[i] * grad;
+        grad_output[i] = (this->layer_input_ptr[i] > 0) ? grad_input[i] : 0.0f;
     }
 }
 
@@ -112,7 +110,6 @@ __global__ void forwardKernelReLU(float* input, float* output, size_t output_siz
 __global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < input_size*batch_size) {
-        float grad = (layer_input_ptr[idx] > 0) ? 1.0f : 0.0f;
-        grad_output[idx] = grad_input[idx] * grad;
+        grad_output[idx] = (layer_input_ptr[idx] > 0) ? grad_input[idx] : 0.0f;
     }
 } 
