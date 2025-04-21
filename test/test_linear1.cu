@@ -160,6 +160,49 @@ void test_backward_gpu() {
     cudaFree(grad_out_dev);
 }
 
+void test_update_parameters() {
+    Linear layer(2, 2, 1);  // input:2, output:2, batch:1
+
+    // Set initial weights and biases
+    float weights[] = {1.0f, 2.0f, 3.0f, 4.0f};  // 2x2
+    float biases[] = {0.5f, -0.5f};
+    layer.setWeights(weights);
+    layer.setBiases(biases);
+
+    // Manually set gradients (dW, db)
+    float grad_weights[] = {0.1f, 0.2f, 0.3f, 0.4f};
+    float grad_biases[] = {0.05f, -0.05f};
+    std::memcpy(layer.host_grad_weights, grad_weights, sizeof(grad_weights));
+    std::memcpy(layer.host_grad_biases, grad_biases, sizeof(grad_biases));
+
+    // Update with lr = 0.1
+    layer.updateParameters(0.1f);
+
+    // Expected weights: w - lr * dw
+    float expected_weights[] = {
+        1.0f - 0.1f * 0.1f,  // 0.99
+        2.0f - 0.1f * 0.2f,  // 1.98
+        3.0f - 0.1f * 0.3f,  // 2.97
+        4.0f - 0.1f * 0.4f   // 3.96
+    };
+    float expected_biases[] = {
+        0.5f - 0.1f * 0.05f,   // 0.495
+        -0.5f - 0.1f * -0.05f  // -0.495
+    };
+
+    float new_weights[4], new_biases[2];
+    layer.getWeights(new_weights);
+    layer.getBiases(new_biases);
+
+    for (int i = 0; i < 4; ++i) {
+        assert(almost_equal(new_weights[i], expected_weights[i]));
+    }
+    for (int i = 0; i < 2; ++i) {
+        assert(almost_equal(new_biases[i], expected_biases[i]));
+    }
+
+    std::cout << "Test UpdateParameters Passed\n";
+}
 
 int main() {
   test_constructor_cpu();
@@ -168,6 +211,7 @@ int main() {
   test_forward_gpu();
   test_backward_cpu();
   test_backward_gpu();
+  test_update_parameters();
 
   std::cout << "All Linear Tests passed!\n";
 }
