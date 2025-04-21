@@ -32,32 +32,36 @@ ReLU::~ReLU(){
 // Forward
 float* ReLU::forward(float* input){
     this->layer_input_ptr = input;
-    if(!this->device){
+    if(!device){
         forwardCpuReLU(input, this->host_forward_buffer);
         return this->host_forward_buffer;
     }
     else{
         size_t blocks = (output_size + threads_per_block - 1) / threads_per_block;
         forwardKernelReLU<<< blocks, threads_per_block >>>(input, this->device_forward_buffer, output_size, batch_size);
-	cudaDeviceSynchronize();
-	// For testing ReLU
-	cudaMemcpy(this->host_forward_buffer, this->device_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyDeviceToHost);
+        cudaDeviceSynchronize();
+        // For testing ReLU forward
+        cudaMemcpy(this->host_forward_buffer, this->device_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyDeviceToHost);
         return this->host_forward_buffer;
-	//// To pass onto next layer
-	//return this->device_forward_buffer;
+        //// To pass onto next layer
+        //return this->device_forward_buffer;
     }
 }
 
 // Backward
-void ReLU::backward(float* grad_input, float* grad_output){
+float* ReLU::backward(float* grad_input){
     if(!device){
         backwardCpuReLU(grad_input, this->host_backward_buffer);
-        grad_output = this->host_backward_buffer;
+        return this->host_backward_buffer;
     }
     else{
         size_t blocks = (input_size + threads_per_block - 1) / threads_per_block;
-        backwardKernelReLU<<< blocks, threads_per_block >>>(grad_input, this->device_backward_buffer, layer_input_ptr, input_size, batch_size);
-        grad_output = this->device_backward_buffer;
+        backwardKernelReLU<<< blocks, threads_per_block >>>(grad_input, this->device_backward_buffer, this->layer_input_ptr, input_size, batch_size);
+        // For testing ReLU backward
+        cudaMemcpy(this->host_backward_buffer, this->device_backward_buffer, sizeof(float)*input_size*batch_size, cudaMemcpyDeviceToHost);
+        return this->host_backward_buffer;
+        //// To pass onto next layer
+        //return this->device_backward_buffer;
     }
 }
 
@@ -89,10 +93,8 @@ void ReLU::forwardCpuReLU(float* input, float* output){
 
 // CPU backward implementation
 void ReLU::backwardCpuReLU(float* grad_input, float* grad_output){
-    float grad;
     for (size_t i=0; i<input_size*batch_size; i++){
-        grad = (layer_input_ptr[i] > 0) ? 1.0f : 0.0f;
-        grad_output[i] = grad_input[i] * grad;
+        grad_output[i] = (this->layer_input_ptr[i] > 0) ? grad_input[i] : 0.0f;
     }
 }
 
@@ -108,7 +110,6 @@ __global__ void forwardKernelReLU(float* input, float* output, size_t output_siz
 __global__ void backwardKernelReLU(float* grad_input, float* grad_output, float* layer_input_ptr, size_t input_size, size_t batch_size){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < input_size*batch_size) {
-        float grad = (layer_input_ptr[idx] > 0) ? 1.0f : 0.0f;
-        grad_output[idx] = grad_input[idx] * grad;
+        grad_output[idx] = (layer_input_ptr[idx] > 0) ? grad_input[idx] : 0.0f;
     }
 } 

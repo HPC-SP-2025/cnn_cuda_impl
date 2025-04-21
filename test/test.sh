@@ -21,7 +21,7 @@ nvcc test_relu.cu ../src/layers/relu.cu -Xcompiler -O3 -Xcompiler -Wall -Xptxas 
 input_size=8
 output_size=8
 batch_size=2
-device=1
+device=0
 for i in {0..0}
 do
     ./relu $input_size $output_size $batch_size $device
