@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
-#include <vector>
 #include "../include/cnn_library/layers/linear.h"
 
 #define EPSILON 1e-5
@@ -111,12 +110,8 @@ void test_backward_cpu() {
     float expected_dW[] = {0.5*1, 0.5*2, -1.0*1, -1.0*2};  // xᵗ * grad_out
     float expected_db[] = {0.5f, -1.0f};
 
-    float grad_w[4], grad_b[2];
-    std::memcpy(grad_w, layer.host_grad_weights, sizeof(grad_w));
-    std::memcpy(grad_b, layer.host_grad_biases, sizeof(grad_b));
-
-    for (int i = 0; i < 4; i++) assert(std::abs(grad_w[i] - expected_dW[i]) < 1e-5);
-    for (int i = 0; i < 2; i++) assert(std::abs(grad_b[i] - expected_db[i]) < 1e-5);
+    for (int i = 0; i < 4; i++) assert(almost_equal(layer.host_grad_weights[i], expected_dW[i]));
+    for (int i = 0; i < 2; i++) assert(almost_equal(layer.host_grad_biases[i], expected_db[i]));
 
     std::cout << "Test Backward (CPU) Passed\n";
 }
@@ -145,8 +140,8 @@ void test_backward_gpu() {
     cudaMemcpy(grad_input_host, grad_input_dev, sizeof(grad_input_host), cudaMemcpyDeviceToHost);
 
     // Validate grad_input
-    assert(std::abs(grad_input_host[0] - (-1.5f)) < 1e-4);
-    assert(std::abs(grad_input_host[1] - (-2.5f)) < 1e-4);
+    assert(almost_equal(grad_input_host[0], -1.5));
+    assert(almost_equal(grad_input_host[1], -2.5));
 
     // Copy gradients
     float grad_w[4], grad_b[2];
