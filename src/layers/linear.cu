@@ -71,9 +71,10 @@ float *Linear::forward(float *input) {
 
     if (!device) {
         // CPU forward pass
-        return forwardCPU(input, host_forward_buffer);
+        return forwardCPU(input);
     } else {
         // TODO: GPU forward pass
+        return forwardGPU(input);
     }
 }
 
@@ -187,6 +188,8 @@ void Linear::updateParameters(float learning_rate) {
         std::memset(host_grad_biases, 0, output_size * sizeof(float));
     } else {
         // TODO: GPU impl
+        int weight_size = input_size * output_size;
+        int bias_size = output_size;
         int threads = 256;
         int blocks = (input_size * output_size + threads - 1) / threads;
 
@@ -277,11 +280,11 @@ float* Linear::forwardGPU(float* input) {
     dim3 gridDim((output_size + 15) / 16, (batch_size + 15) / 16);
 
     forward_kernel<<<gridDim, blockDim>>>(
-        device_cached_input, device_weights, device_biases, device_forward_buffer,
+        input, device_weights, device_biases, device_forward_buffer,
         input_size, output_size, batch_size
     );
 
-    return output;
+    return device_forward_buffer;
 }
 
 
