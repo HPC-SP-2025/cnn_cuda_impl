@@ -4,13 +4,13 @@
 
 class CrossEntropy_Loss : public Loss {
   public:
-    CrossEntropy_Loss(size_t input_size, size_t batch_size) {
+    CrossEntropy_Loss(size_t num_classes, size_t batch_size) {
         this->layer_name = "Cross_Entropy_Loss";
         this->batch_size = batch_size;
-        this->input_size = input_size;
+        this->input_size = num_classes;
 
         this->host_forward_buffer = new float[1];
-        this->host_backward_buffer = new float[batch_size * input_size];
+        this->host_backward_buffer = new float[batch_size * num_classes];
     }
 
     ~CrossEntropy_Loss() {

@@ -52,16 +52,17 @@ void Sequential::forward(float *input, float *output) {
 // Backward pass
 float Sequential::backward(float *predicted, float *ground_truth, Loss *loss_layer) {
     float loss_value = 0.0f;
-    float *loss_ptr = new float[1];
+    float *loss_ptr;
     float *output = nullptr;
     float *input = nullptr;
 
     // Forward Pass
     loss_layer->setTarget(ground_truth);
-    loss_layer->forward(predicted, loss_ptr);
+    loss_ptr = loss_layer->forward(predicted);
+    loss_value = loss_ptr[0];
 
     // Backward Pass through the loss layer
-    loss_layer->backward(predicted, output);
+    output = loss_layer->backward(predicted);
 
     // Traverse the layers in reverse order
     for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
