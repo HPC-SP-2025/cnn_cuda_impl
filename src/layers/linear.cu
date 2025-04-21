@@ -1,4 +1,5 @@
 #include "../../include/cnn_library/layers/linear.h"
+#include <cstring>>
 #include <iostream>
 
 // Constructor
@@ -81,7 +82,7 @@ float *Linear::forward(float *input) {
 // CPU forward pass
 float *Linear::forwardCPU(float *input) {
     // Initialize output with biases
-    float* output = host_forward_buffer;
+    float *output = host_forward_buffer;
     for (size_t b = 0; b < batch_size; b++) {
         for (size_t o = 0; o < output_size; o++) {
             output[b * output_size + o] = host_biases[o];
@@ -193,11 +194,8 @@ void Linear::updateParameters(float learning_rate) {
         int threads = 256;
         int blocks = (input_size * output_size + threads - 1) / threads;
 
-        update_parameters_kernel<<<blocks, threads>>>(
-            device_weights, device_grad_weights,
-            device_biases, device_grad_biases,
-            learning_rate, weight_size, bias_size
-        );
+        update_parameters_kernel<<<blocks, threads>>>(device_weights, device_grad_weights, device_biases,
+                                                      device_grad_biases, learning_rate, weight_size, bias_size);
     }
 }
 
@@ -243,7 +241,6 @@ void Linear::setWeights(float *weights) {
     }
 }
 
-
 // Set biases from an external array
 void Linear::setBiases(float *biases) {
     std::memcpy(host_biases, biases, output_size * sizeof(float));
@@ -262,7 +259,6 @@ void Linear::getWeights(float *weights) {
     std::memcpy(weights, host_weights, input_size * output_size * sizeof(float));
 }
 
-
 // Get biases by copying to an external array
 void Linear::getBiases(float *biases) {
     if (device) {
@@ -272,21 +268,18 @@ void Linear::getBiases(float *biases) {
     std::memcpy(biases, host_biases, output_size * sizeof(float));
 }
 
-float* Linear::forwardGPU(float* input) {
+float *Linear::forwardGPU(float *input) {
     size_t input_bytes = input_size * batch_size * sizeof(float);
     cached_input = input;
 
     dim3 blockDim(16, 16);
     dim3 gridDim((output_size + 15) / 16, (batch_size + 15) / 16);
 
-    forward_kernel<<<gridDim, blockDim>>>(
-        input, device_weights, device_biases, device_forward_buffer,
-        input_size, output_size, batch_size
-    );
+    forward_kernel<<<gridDim, blockDim>>>(input, device_weights, device_biases, device_forward_buffer, input_size,
+                                          output_size, batch_size);
 
     return device_forward_buffer;
 }
-
 
 float *Linear::backwardGPU(float *grad_input) {
     size_t input_bytes = input_size * batch_size * sizeof(float);
@@ -296,29 +289,23 @@ float *Linear::backwardGPU(float *grad_input) {
 
     // grad_input
     dim3 grid_input((input_size + 15) / 16, (batch_size + 15) / 16);
-    backward_input_kernel<<<grid_input, blockDim>>>(
-        grad_input, device_weights, device_backward_buffer,
-        input_size, output_size, batch_size
-    );
+    backward_input_kernel<<<grid_input, blockDim>>>(grad_input, device_weights, device_backward_buffer, input_size,
+                                                    output_size, batch_size);
 
     // grad_weights
     dim3 grid_w((output_size + 15) / 16, (input_size + 15) / 16);
-    backward_weight_kernel<<<grid_w, blockDim>>>(
-        cached_input, grad_input, device_grad_weights,
-        input_size, output_size, batch_size
-    );
+    backward_weight_kernel<<<grid_w, blockDim>>>(cached_input, grad_input, device_grad_weights, input_size, output_size,
+                                                 batch_size);
 
     // grad_biases
     dim3 grid_b((output_size + 15) / 16);
-    backward_bias_kernel<<<grid_b, 256>>>(
-        grad_input, device_grad_biases,
-        output_size, batch_size
-    );
+    backward_bias_kernel<<<grid_b, 256>>>(grad_input, device_grad_biases, output_size, batch_size);
 
     return device_backward_buffer;
 }
 
-__global__ void forward_kernel(float *input, float *weights, float *biases, float *output, size_t input_size, size_t output_size, size_t batch_size) {
+__global__ void forward_kernel(float *input, float *weights, float *biases, float *output, size_t input_size,
+                               size_t output_size, size_t batch_size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y; // batch index
     int col = blockIdx.x * blockDim.x + threadIdx.x; // output index
 
@@ -331,7 +318,8 @@ __global__ void forward_kernel(float *input, float *weights, float *biases, floa
     }
 }
 
-__global__ void backward_input_kernel(float *grad_output, float *weights, float *grad_input, size_t input_size, size_t output_size, size_t batch_size) {
+__global__ void backward_input_kernel(float *grad_output, float *weights, float *grad_input, size_t input_size,
+                                      size_t output_size, size_t batch_size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y; // batch index
     int col = blockIdx.x * blockDim.x + threadIdx.x; // input index
 
@@ -368,21 +356,19 @@ __global__ void backward_bias_kernel(float *grad_output, float *grad_biases, siz
         atomicAdd(&grad_biases[o], val);
     }
 }
-__global__ void update_parameters_kernel(float* weights, float* grad_weights,
-    float* biases, float* grad_biases,
-    float learning_rate,
-    size_t weight_size, size_t bias_size) {
-int idx = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void update_parameters_kernel(float *weights, float *grad_weights, float *biases, float *grad_biases,
+                                         float learning_rate, size_t weight_size, size_t bias_size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-// Update weights
-if (idx < weight_size) {
-weights[idx] -= learning_rate * grad_weights[idx];
-grad_weights[idx] = 0.0f;
-}
+    // Update weights
+    if (idx < weight_size) {
+        weights[idx] -= learning_rate * grad_weights[idx];
+        grad_weights[idx] = 0.0f;
+    }
 
-// Update biases
-if (idx < bias_size) {
-biases[idx] -= learning_rate * grad_biases[idx];
-grad_biases[idx] = 0.0f;
-}
+    // Update biases
+    if (idx < bias_size) {
+        biases[idx] -= learning_rate * grad_biases[idx];
+        grad_biases[idx] = 0.0f;
+    }
 }
