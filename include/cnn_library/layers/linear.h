@@ -39,10 +39,10 @@ public:
     ~Linear();
 
     // Forward pass override
-    void forward(float* input, float* output) override;
+    float* forward(float* input) override;
 
     // Backward pass override
-    void backward(float* grad_input, float* grad_output) override;
+    float* backward(float* grad_input) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
@@ -71,16 +71,23 @@ public:
     // Update weights
     void updateParameters(float learning_rate) override;
 
+    // Get and set weights and biases
+    void setWeights(float* weights);
+    void setBiases(float* biases);
+    void getWeights(float* weights);
+    void getBiases(float* biases);
+
 private:
 
     // CPU Forward Pass
-    void forwardCPU(float* input, float* output);
+    // Returns the pointer to the output
+    float* forwardCPU(float* input, float* output);
     // CPU Backward Pass
-    void backwardCPU(float* grad_input, float* grad_output);
+    float* backwardCPU(float* grad_input);
     // GPU Forward Pass
-    void forwardGPU(float* input, float* output);
+    float* forwardGPU(float* input, float* output);
     // GPU Backward Pass
-    void backwardGPU(float* grad_input, float* grad_output);
+    float* backwardGPU(float* grad_input);
 };
 
-#endif // LOSS_H
+#endif // LINEAR_H

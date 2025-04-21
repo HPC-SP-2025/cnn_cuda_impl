@@ -65,13 +65,13 @@ Linear::~Linear() {
 }
 
 // Forward
-void Linear::forward(float* input, float* output) {
+float* Linear::forward(float* input) {
     // Cache input for backward pass
     std::memcpy(cached_input, input, input_size * batch_size * sizeof(float));
 
     if(!device) {
         // CPU forward pass
-        forwardCPU(input, host_forward_buffer);
+        return forwardCPU(input, host_forward_buffer);
     }
     else {
         // TODO: GPU forward pass
@@ -81,7 +81,7 @@ void Linear::forward(float* input, float* output) {
 
 
 // CPU forward pass
-void Linear::forwardCPU(float* input, float* output) {
+float* Linear::forwardCPU(float* input, float* output) {
     // Initialize output with biases
     for (size_t b = 0; b < batch_size; b++) {
         for (size_t o = 0; o < output_size; o++) {
@@ -97,28 +97,30 @@ void Linear::forwardCPU(float* input, float* output) {
             }
         }
     }
+
+    return output;
 }
 
 // Backward
-void Linear::backward(float* grad_input, float* grad_output) {
+float* Linear::backward(float* grad_input) {
     if(!device) {
         // CPU implementation
-        backwardCPU(grad_input, grad_output);
+        return backwardCPU(grad_input);
     } else {
         // TODO: GPU backward pass
     }
 }
 
 // CPU backward pass
-void Linear::backwardCPU(float* grad_input, float* grad_output) {
+float* Linear::backwardCPU(float* grad_input) {
     // Initialize grad_output with zeros
-    std::memset(grad_output, 0, input_size * batch_size * sizeof(float));
+    std::memset(host_backward_buffer, 0, input_size * batch_size * sizeof(float));
 
     // Compute di
     for (size_t b = 0; b < batch_size; b++) {
         for (size_t i = 0; i < input_size; i++) {
             for (size_t o = 0; o < output_size; o++) {
-                grad_output[b * input_size + i] += grad_input[b * output_size + o] * host_weights[i * output_size + o];
+                host_backward_buffer[b * input_size + i] += grad_input[b * output_size + o] * host_weights[i * output_size + o];
             }
         }
     }
@@ -139,6 +141,8 @@ void Linear::backwardCPU(float* grad_input, float* grad_output) {
             host_grad_biases[o] += grad_input[b * output_size + o];
         }
     }
+
+    return host_backward_buffer;
 }
 
 // Set device (0 - CPU, 1 - GPU)
@@ -178,7 +182,7 @@ void Linear::initializeWeights() {
     std::mt19937 gen(rd());
 
     // Xavier init: stddev = sqrt(2 / (input_size + output_size))
-    float stddev = std::sqrt(2.0f / (input_size | output_size));
+    float stddev = std::sqrt(2.0f / (input_size + output_size));
     std::normal_distribution<float> d(0.0f, stddev);
 
     // Initialize weights
@@ -217,10 +221,50 @@ int Linear::getDevice() {
     return device;
 }
 
-void Linear::forwardGPU(float* input, float* output) {
+// Set weights from an external array
+void Linear::setWeights(float* weights) {
+    // Copy weights from the provided array to host_weights
+    std::memcpy(host_weights, weights, input_size * output_size * sizeof(float));
+    
+    // TODO:  If using GPU, also update device memory
+    if (device) {
+    }
+}
+
+// Set biases from an external array
+void Linear::setBiases(float* biases) {
+    // Copy biases from the provided array to host_biases
+    std::memcpy(host_biases, biases, output_size * sizeof(float));
+    
+    // TODO: If using GPU, also update device memory
+    if (device) {
+    }
+}
+
+// Get weights by copying to an external array
+void Linear::getWeights(float* weights) {
+    // TODO: If using GPU, first update host memory from device
+    if (device) {
+    }
+    
+    // Copy host_weights to the provided array
+    std::memcpy(weights, host_weights, input_size * output_size * sizeof(float));
+}
+
+// Get biases by copying to an external array
+void Linear::getBiases(float* biases) {
+    //TODO: If using GPU, first update host memory from device
+    if (device) {
+    }
+    
+    // Copy host_biases to the provided array
+    std::memcpy(biases, host_biases, output_size * sizeof(float));
+}
+
+float* Linear::forwardGPU(float* input, float* output) {
 
 }
 
-void Linear::backwardGPU(float* grad_input, float* grad_output) {
+float* Linear::backwardGPU(float* grad_input) {
 
 }
