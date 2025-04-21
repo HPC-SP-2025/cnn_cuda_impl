@@ -108,6 +108,7 @@ float *Linear::backward(float *grad_input) {
         return backwardCPU(grad_input);
     } else {
         // TODO: GPU backward pass
+        return backwardGPU(grad_input);
     }
 }
 
