@@ -110,9 +110,6 @@ void test_backward_cpu() {
     float expected_dW[] = {0.5*1, 1*(-1.0), 0.5*2, -1.0*2};  // xᵗ * grad_out
     float expected_db[] = {0.5f, -1.0f};
 
-    for(int i = 0; i < 4; i++) std::cout << "W[" << i << "] : " << layer.host_grad_weights[i] << std::endl;
-    for(int i = 0; i < 2; i++) std::cout << "b[" << i << "] : " << layer.host_grad_biases[i] << std::endl;
-
     for (int i = 0; i < 4; i++) assert(almost_equal(layer.host_grad_weights[i], expected_dW[i]));
     for (int i = 0; i < 2; i++) assert(almost_equal(layer.host_grad_biases[i], expected_db[i]));
 
@@ -154,11 +151,8 @@ void test_backward_gpu() {
     float expected_dW[] = {0.5*1, 1*(-1.0), 0.5*2, -1.0*2};  // xᵗ * grad_out
     float expected_db[] = {0.5f, -1.0f};
 
-    for(int i = 0; i < 4; i++) std::cout << "W[" << i << "] : " << layer.device_grad_weights[i] << std::endl;
-    for(int i = 0; i < 2; i++) std::cout << "b[" << i << "] : " << layer.device_grad_biases[i] << std::endl;
-
-    for (int i = 0; i < 4; i++) assert(std::abs(grad_w[i] - expected_dW[i]) < 1e-4);
-    for (int i = 0; i < 2; i++) assert(std::abs(grad_b[i] - expected_db[i]) < 1e-4);
+    for (int i = 0; i < 4; i++) assert(almost_equal(grad_w[i], expected_dW[i]));
+    for (int i = 0; i < 2; i++) assert(almost_equal(grad_b[i], expected_db[i]));
 
     std::cout << "Test Backward (GPU) Passed\n";
 
