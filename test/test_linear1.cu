@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include "../include/cnn_library/layers/linear.h"
 
 #define EPSILON 1e-5
