@@ -5,21 +5,27 @@
 
 // TODO: use reduction
 __global__ void forward_cel_kernel(const float *pred, float *target, float *loss, int n, int num_classes) {
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    if (idx < n) {
-        float loss_i = log(pred[idx * num_classes + (int)target[idx]] + EPSILON);
-        atomicAdd(loss, -loss_i);
-    }
-}
 
-__global__ void backward_cel_kernel(float *grad_output, float *pred, float *target, int n, int num_classes) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    if (idx < n) {
-        for (auto j = 0; j < num_classes; j++)
-            grad_output[idx * num_classes + j] = pred[idx * num_classes + j] / n;
+    int tid = threadIdx.x;
 
-        grad_output[idx * num_classes + (int)target[idx]] -= 1.0 / n;
+    float loss_i = 0.0;
+    if (idx < n) {
+        loss_i = -log(max(pred[idx * num_classes + (int)target[idx]], EPSILON));
+        // atomicAdd(loss, -loss_i);
     }
+    extern __shared__ float shared_loss[];
+    shared_loss[tid] = loss_i;
+
+    __syncthreads();
+    for (int s = blockDim.x / 2; s > 0; s >>= 1) {
+        if (tid < s)
+            shared_loss[tid] += shared_loss[tid + s];
+        __syncthreads();
+    }
+
+    if (tid == 0)
+        atomicAdd(loss, shared_loss[0]);
 }
 
 /**
@@ -32,10 +38,30 @@ float Cross_Entropy_Loss::forward_CPU(const float *pred, float *target) {
 
     float loss = 0.0;
     for (auto i = 0; i < n; i++) {
-        loss -= log(pred[i * num_classes + (int)target[i]] + EPSILON);
+        loss -= log(max(pred[i * num_classes + (int)target[i]], EPSILON));
     }
     loss /= static_cast<float>(n);
     return loss;
+}
+
+float Cross_Entropy_Loss::forward_GPU(const float *pred, float *target) {
+    float loss = 0;
+    cudaMemset(d_loss, 0, sizeof(float));
+    int num_blocks = (batch_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    int mem_size = threads_per_block * sizeof(float);
+    forward_cel_kernel<<<num_blocks, BLOCK_SIZE, mem_size>>>(pred, this->target, d_loss, batch_size, input_size);
+    cudaMemcpy(&loss, d_loss, sizeof(float), cudaMemcpyDeviceToHost);
+    return loss;
+}
+
+__global__ void backward_cel_kernel(float *grad_output, float *pred, float *target, int n, int num_classes) {
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    if (idx < n) {
+        for (auto j = 0; j < num_classes; j++)
+            grad_output[idx * num_classes + j] = pred[idx * num_classes + j] / n;
+
+        grad_output[idx * num_classes + (int)target[idx]] -= 1.0 / n;
+    }
 }
 
 void Cross_Entropy_Loss::backward_CPU(float *grad_output, float *pred, float *target) {
@@ -71,11 +97,7 @@ Cross_Entropy_Loss::~Cross_Entropy_Loss() {
 float *Cross_Entropy_Loss::forward(float *pred) {
     float loss;
     if (this->device) {
-        cudaMemset(d_loss, 0, sizeof(float));
-        int num_blocks = (input_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
-        forward_cel_kernel<<<num_blocks, BLOCK_SIZE>>>(pred, this->target, d_loss, batch_size, input_size);
-        cudaMemcpy(&loss, d_loss, sizeof(float), cudaMemcpyDeviceToHost);
-
+        loss = forward_GPU(pred, this->target);
     } else {
         loss = forward_CPU(pred, this->target);
     }

@@ -25,7 +25,7 @@ void test_forward_cpu() {
 
     loss.setTarget(targets);
     float *out = loss.forward(predictions);
-    float expected = -log(0.25 + 1e-8);
+    float expected = -log(0.25);
     assert(float_equals(out[0], expected));
     printf("PASSED\n");
 }
@@ -65,7 +65,7 @@ void test_forward_gpu() {
 
     loss.setTarget(d_targets);
     float *d_out = loss.forward(d_preds);
-    float expected = -log(0.25 + 1e-8);
+    float expected = -log(0.25);
 
     float *out = new float[1];
     cudaMemcpy(out, d_out, sizeof(float), cudaMemcpyDeviceToHost);
