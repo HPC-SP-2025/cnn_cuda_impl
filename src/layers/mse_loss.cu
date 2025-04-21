@@ -8,35 +8,39 @@ class MSE_Loss : public Loss {
         this->layer_name = "MSE_Loss";
         this->batch_size = batch_size;
 
-        float *host_backward_buffer = new float[batch_size];
+        this->host_forward_buffer = new float[1];
+        this->host_backward_buffer = new float[batch_size];
     }
 
     ~MSE_Loss() {
         delete[] host_backward_buffer;
+        delete[] host_forward_buffer;
         if (device) {
             cudaFree(d_loss);
             cudaFree(device_backward_buffer);
         }
     }
 
-    void forward(const float *pred, float *output) {
+    float *forward(const float *pred) {
         float loss;
-        if (this->device == 0) {
-            loss = forward_CPU(pred, this->target);
-        } else {
+        if (this->device) {
             cudaMemset(d_loss, 0, sizeof(float));
             forward_kernel<<<1, 256>>>(pred, this->target, d_loss, batch_size);
             cudaMemcpy(&loss, d_loss, sizeof(float), cudaMemcpyDeviceToHost);
+        } else {
+            loss = forward_CPU(pred, this->target);
         }
-        output[0] = loss;
+        host_forward_buffer[0] = loss;
+        return host_forward_buffer;
     }
 
-    void backward(float *pred, float *grad_output) {
-        if (this->device == 0) {
-
-            backward_CPU(grad_output, pred, target);
+    float *backward(float *pred) {
+        if (this->device) {
+            backward_kernel(device_backward_buffer, pred, target, batch_size);
+            return device_backward_buffer;
         } else {
-            backward_kernel(grad_output, pred, target, batch_size);
+            backward_CPU(host_backward_buffer, pred, target);
+            return host_backward_buffer;
         }
     }
 
@@ -85,6 +89,5 @@ class MSE_Loss : public Loss {
     }
 
   private:
-    // float *target;
     float *d_loss;
 };

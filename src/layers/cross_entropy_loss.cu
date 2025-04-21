@@ -9,10 +9,12 @@ class CrossEntropy_Loss : public Loss {
         this->batch_size = batch_size;
         this->input_size = input_size;
 
-        host_backward_buffer = new float[batch_size * input_size];
+        this->host_forward_buffer = new float[1];
+        this->host_backward_buffer = new float[batch_size * input_size];
     }
 
     ~CrossEntropy_Loss() {
+        delete[] host_forward_buffer;
         delete[] host_backward_buffer;
         if (device) {
             cudaFree(device_backward_buffer);
@@ -20,7 +22,7 @@ class CrossEntropy_Loss : public Loss {
         }
     }
 
-    void forward(const float *pred, float *output) {
+    float *forward(const float *pred) {
         float loss;
         if (this->device) {
             cudaMemset(d_loss, 0, sizeof(float));
@@ -30,14 +32,17 @@ class CrossEntropy_Loss : public Loss {
         } else {
             loss = forward_CPU(pred, this->target);
         }
-        output[0] = loss;
+        host_forward_buffer[0] = loss;
+        return host_forward_buffer;
     }
 
-    void backward(float *pred, float *grad_output) {
+    float *backward(float *pred) {
         if (this->device) {
-            backward_kernel(grad_output, pred, this->target, batch_size, input_size);
+            backward_kernel(device_backward_buffer, pred, this->target, batch_size, input_size);
+            return device_backward_buffer;
         } else {
-            backward_CPU(grad_output, pred, this->target);
+            backward_CPU(host_backward_buffer, pred, this->target);
+            return host_backward_buffer;
         }
     }
 

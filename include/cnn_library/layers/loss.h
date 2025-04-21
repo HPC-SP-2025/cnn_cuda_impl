@@ -14,10 +14,10 @@ class Loss : public Layer {
     ~Loss();
 
     // Forward pass override
-    void forward(float *pred, float *target) override;
+    float *forward(float *pred) override;
 
     // Backward pass override
-    void backward(float *pred, float *grad_output) override;
+    float *backward(float *pred) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
