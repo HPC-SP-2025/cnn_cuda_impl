@@ -91,10 +91,88 @@ void test_forward_gpu() {
     cudaFree(input_device);
 }
 
+void test_backward_cpu() {
+    Linear layer(2, 2, 1);  // input:2, output:2, batch:1
+
+    // Set known weights and input
+    float weights[] = {1, 2, 3, 4};   // 2x2
+    float input[] = {1, 2};           // 1x2
+    float grad_out[] = {0.5, -1.0};   // dL/dy: 1x2
+
+    layer.setWeights(weights);
+    layer.forward(input);  // cache input
+    float* grad_input = layer.backward(grad_out);  // calls backwardCPU()
+
+    // Expected: grad_input = grad_out * Wᵗ = [0.5, -1] * [[1,3],[2,4]]ᵗ = [0.5*1 + -1*2, 0.5*3 + -1*4] = [-1.5, -2.5]
+    assert(almost_equal(grad_input[0], -1.5f));
+    assert(almost_equal(grad_input[1], -2.5f));
+
+    // Check gradients
+    float expected_dW[] = {0.5*1, 0.5*2, -1.0*1, -1.0*2};  // xᵗ * grad_out
+    float expected_db[] = {0.5f, -1.0f};
+
+    float grad_w[4], grad_b[2];
+    std::memcpy(grad_w, layer.host_grad_weights, sizeof(grad_w));
+    std::memcpy(grad_b, layer.host_grad_biases, sizeof(grad_b));
+
+    for (int i = 0; i < 4; i++) assert(std::abs(grad_w[i] - expected_dW[i]) < 1e-5);
+    for (int i = 0; i < 2; i++) assert(std::abs(grad_b[i] - expected_db[i]) < 1e-5);
+
+    std::cout << "Test Backward (CPU) Passed\n";
+}
+void test_backward_gpu() {
+    Linear layer(2, 2, 1);
+    layer.setDevice(true);
+
+    float weights[] = {1, 2, 3, 4};
+    float input_host[] = {1.0f, 2.0f};
+    float grad_out_host[] = {0.5f, -1.0f};
+
+    layer.setWeights(weights);
+    
+    // Allocate and copy input/grad_out to device
+    float *input_dev, *grad_out_dev;
+    cudaMalloc(&input_dev, sizeof(input_host));
+    cudaMalloc(&grad_out_dev, sizeof(grad_out_host));
+    cudaMemcpy(input_dev, input_host, sizeof(input_host), cudaMemcpyHostToDevice);
+    cudaMemcpy(grad_out_dev, grad_out_host, sizeof(grad_out_host), cudaMemcpyHostToDevice);
+
+    layer.forward(input_dev);  // GPU forward caches device input
+    float* grad_input_dev = layer.backward(grad_out_dev);  // GPU backward
+
+    // Copy grad_input back
+    float grad_input_host[2];
+    cudaMemcpy(grad_input_host, grad_input_dev, sizeof(grad_input_host), cudaMemcpyDeviceToHost);
+
+    // Validate grad_input
+    assert(std::abs(grad_input_host[0] - (-1.5f)) < 1e-4);
+    assert(std::abs(grad_input_host[1] - (-2.5f)) < 1e-4);
+
+    // Copy gradients
+    float grad_w[4], grad_b[2];
+    cudaMemcpy(grad_w, layer.device_grad_weights, sizeof(grad_w), cudaMemcpyDeviceToHost);
+    cudaMemcpy(grad_b, layer.device_grad_biases, sizeof(grad_b), cudaMemcpyDeviceToHost);
+
+    float expected_dW[] = {0.5f * 1, 0.5f * 2, -1.0f * 1, -1.0f * 2};
+    float expected_db[] = {0.5f, -1.0f};
+
+    for (int i = 0; i < 4; i++) assert(std::abs(grad_w[i] - expected_dW[i]) < 1e-4);
+    for (int i = 0; i < 2; i++) assert(std::abs(grad_b[i] - expected_db[i]) < 1e-4);
+
+    std::cout << "Test Backward (GPU) Passed\n";
+
+    cudaFree(input_dev);
+    cudaFree(grad_out_dev);
+}
+
+
 int main() {
   test_constructor_cpu();
-  test_forward_cpu();
   test_weights_bias_io();
+  test_forward_cpu();
+  test_forward_gpu();
+  test_backward_cpu();
+  test_backward_gpu();
 
   std::cout << "Linear Tests passed!\n";
 }

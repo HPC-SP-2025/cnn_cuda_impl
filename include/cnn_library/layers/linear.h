@@ -12,6 +12,11 @@ class Linear : public Layer {
     float *cached_input;
 
   public:
+    // TODO: Remove after testing
+    float* host_grad_weights;
+    float* host_grad_biases;
+    float* device_grad_weights;
+    float* device_grad_biases;
     // Constructor
     Linear(size_t input_size, size_t output_size, size_t batch_size = 1);
 

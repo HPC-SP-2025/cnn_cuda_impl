@@ -8,7 +8,6 @@
 #SBATCH --error=linear_test.err
 #SBATCH --time=0-00:10:00
 
-cd $SLURM_SUBMIT_DIR
 
 # load the gcc for compiling C++ programs
 module load gcc/11.3.0
