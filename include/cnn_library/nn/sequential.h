@@ -1,19 +1,19 @@
 #ifndef SEQUENTIAL_H
 #define SEQUENTIAL_H
 
-# include <vector>
-# include "../layers/base_layer.h"
+#include "../layers/base_layer.h"
+#include "../layers/loss.h"
+#include <vector>
 
-class Sequential
-{
+class Sequential {
 
-private:
+  private:
     int input_size;
     int output_size;
     int device;
-    std::vector<Layer*> layers;
-    
-public:
+    std::vector<Layer *> layers;
+
+  public:
     // Constructor
     Sequential(int input_size, int output_size);
 
@@ -21,16 +21,16 @@ public:
     ~Sequential();
 
     // Add a layer to the model
-    void addLayer(Layer* layer);
+    void addLayer(Layer *layer);
 
     // Set the device ID for the layer
     void setDevice(int device);
 
     // Forward pass
-    void forward(float* input, float* output);
+    void forward(float *input, float *output);
 
     // Backward pass
-    float backward(float* prediected, float* ground_truth, Layer* loss);
+    float backward(float *prediected, float *ground_truth, Loss *loss);
 
     // Getters for input and output sizes
     int getInputSize() const;
@@ -40,18 +40,15 @@ public:
     void updateParameters(float learning_rate);
 
     // Get Gradients
-    void getGradients(std::vector<float>& gradients);
+    void getGradients(std::vector<float> &gradients);
 
     // Get Params
-    void getParams(std::vector<float>& params);
+    void getParams(std::vector<float> &params);
 
     void saveModel(const string filename);
 
     // Save Params
     void summary();
-
-
-
 };
 
 #endif // SEQUENTIAL_H
