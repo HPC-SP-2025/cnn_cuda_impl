@@ -1,6 +1,6 @@
+#include "include/cnn_library/layers/cross_entropy_loss.h"
 #include "include/cnn_library/layers/loss.h"
 #include "model.h"
-#include "src/layers/cross_entropy_loss.cu"
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -25,7 +25,7 @@ int main() {
     net->setDevice(device);
 
     // Create the loss layer
-    Loss *loss_layer = new CrossEntropy_Loss(num_classes, batch_size);
+    Loss *loss_layer = new Cross_Entropy_Loss(num_classes, batch_size);
 
     // Create the training for loop For Epoch
     std::cout << "Training on " << device << " for " << total_iterations << " iterations." << std::endl;
