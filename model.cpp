@@ -26,13 +26,14 @@ Sequential* create_mnist_model(unsigned int input_size, unsigned int batch_size,
 
     // Add layers to the model
     model->addLayer(new Linear(input_size, 1024, batch_size)); // Input channels: 1, Output channels: 32, Kernel size: 3x3, Stride: 1
-    model->addLayer(new ReLU());
+    model->addLayer(new ReLU(1024, 1024, batch_size)); // ReLU activation
     model->addLayer(new Linear(1024, 1024, batch_size)); // Flattened input size: 32 * 26 * 26, Output size: 128
     model->addLayer(new ReLU());
     model->addLayer(new Linear(1024, 128, batch_size)); // Fully connected layer to 128 neurons
     model->addLayer(new ReLU());
     model->addLayer(new Linear(128, num_classes, batch_size)); // Fully connected layer to 10 classes
-    model->addLayer(new Softmax());
+    model->addLayer(new Softmax(num_classes, num_classes, batch_size));
+
     
 
     return model;

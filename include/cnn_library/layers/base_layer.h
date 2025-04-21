@@ -1,6 +1,7 @@
 #ifndef BASE_LAYER_H
 #define BASE_LAYER_H
 
+// Include the headers
 #include <memory>
 #include <string>
 #include <vector>
@@ -11,10 +12,11 @@ class Layer {
 
   protected:
     string layer_name; // Name of the layer
-    int device = 0;
+    int device = 0;    // 0 for CPU, 1 for GPU
     size_t input_size;
     size_t output_size;
     size_t batch_size;
+    unsigned int threads_per_block = 1024;
 
     // For convolution Layer only
     unsigned int input_height;
@@ -46,7 +48,7 @@ class Layer {
     // Constructor:
     /* Constructor is responsible for inilializing the weights and biases, gradients,
     forward_buffer and the backward_buffer for the layer on the CPU*/
-    Layer();
+    Layer() {};
     virtual ~Layer() = default;
 
     // -------------------------------------------------------------------
@@ -62,7 +64,7 @@ class Layer {
     *output: pointer of the output of the current layer
     */
 
-    virtual void forward(float *input, float *output) = 0;
+    virtual float *forward(float *input) = 0;
 
     // BACKWARD FUNCTION
     /* Performs the backward pass of the layer and saves the gradients in its
@@ -73,7 +75,7 @@ class Layer {
     *grad_output: pointer of the gradients to be passed to the PREVIOUS layer
 
     */
-    virtual void backward(float *grad_input, float *grad_output) = 0;
+    virtual float *backward(float *grad_input) = 0;
 
     // INPUT SIZE
     /*Returns the Input size the layer*/

@@ -28,13 +28,25 @@ void Sequential::setDevice(int device) {
 
 // Forward pass
 void Sequential::forward(float *input, float *output) {
+    float *current_input = input;
+    float *current_output = nullptr;
+
     for (Layer *layer : layers) {
+
         // Call the forward method of each layer
-        layer->forward(input, output);
-        input = output; // Update input for the next layer
+        layer->forward(current_input, current_output);
+
+        // Update current_input to point to the current_output
+        current_input = current_output;
     }
-    // Final output
-    output = input; // Set the final output
+
+    // Copy the final output to the provided output pointer
+    std::copy(current_input, current_input + layers.back()->getOutputSize(), output);
+
+    // Free the memory of the last current_input if it was dynamically allocated
+    if (current_input != input) {
+        delete[] current_input;
+    }
 }
 
 // Backward pass
