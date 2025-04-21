@@ -38,8 +38,7 @@ void test_linear_forward_basic() {
     float expected[3] = {1.0f, 1.4f, 1.8f};
     
     // Perform forward pass
-    float output[3];
-    linear_layer.forward(input, output);
+    float *output = linear_layer.forward(input);
     
     // Verify results
     for (int i = 0; i < 3; ++i) {
@@ -84,8 +83,7 @@ void test_linear_forward_batch() {
     };
     
     // Perform forward pass
-    float output[6];
-    linear_layer.forward(input, output);
+    float *output = linear_layer.forward(input);
     
     // Verify results
     for (int i = 0; i < 6; ++i) {
@@ -116,8 +114,7 @@ void test_linear_backward() {
     float input[2] = {1.0f, 2.0f};
     
     // Forward pass first to cache input
-    float output[3];
-    linear_layer.forward(input, output);
+    float *output = linear_layer.forward(input);
     
     // Gradient coming from next layer
     float grad_input[3] = {1.0f, 1.0f, 1.0f};
@@ -131,8 +128,7 @@ void test_linear_backward() {
     // but we're not testing them in this basic test
     
     // Perform backward pass
-    float grad_output[2];
-    linear_layer.backward(grad_input, grad_output);
+    float *grad_output = linear_layer.backward(grad_input);
     
     // Verify gradient with respect to input
     for (int i = 0; i < 2; ++i) {
@@ -158,13 +154,11 @@ void test_linear_parameter_update() {
     
     // Forward pass with input
     float input[2] = {1.0f, 1.0f};
-    float output[2];
-    linear_layer.forward(input, output);
+    float *output = linear_layer.forward(input);
     
     // Backward pass with gradient
     float grad_input[2] = {1.0f, 1.0f};
-    float grad_output[2];
-    linear_layer.backward(grad_input, grad_output);
+    float *grad_output = linear_layer.backward(grad_input);
     
     // Now the gradients should be computed
     // Weight gradients: input[i] * grad_input[j]
