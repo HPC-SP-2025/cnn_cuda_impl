@@ -107,7 +107,7 @@ void test_backward_cpu() {
     assert(almost_equal(grad_input[1], -2.5f));
 
     // Check gradients
-    float expected_dW[] = {0.5*1, 0.5*2, -1.0*1, -1.0*2};  // xᵗ * grad_out
+    float expected_dW[] = {0.5*1, 1*(-1.0), 0.5*2, -1.0*2};  // xᵗ * grad_out
     float expected_db[] = {0.5f, -1.0f};
 
     for(int i = 0; i < 4; i++) std::cout << "W[" << i << "] : " << layer.host_grad_weights[i] << std::endl;
@@ -151,7 +151,7 @@ void test_backward_gpu() {
     cudaMemcpy(grad_w, layer.device_grad_weights, sizeof(grad_w), cudaMemcpyDeviceToHost);
     cudaMemcpy(grad_b, layer.device_grad_biases, sizeof(grad_b), cudaMemcpyDeviceToHost);
 
-    float expected_dW[] = {0.5f * 1, 0.5f * 2, -1.0f * 1, -1.0f * 2};
+    float expected_dW[] = {0.5*1, 1*(-1.0), 0.5*2, -1.0*2};  // xᵗ * grad_out
     float expected_db[] = {0.5f, -1.0f};
 
     for (int i = 0; i < 4; i++) assert(std::abs(grad_w[i] - expected_dW[i]) < 1e-4);
