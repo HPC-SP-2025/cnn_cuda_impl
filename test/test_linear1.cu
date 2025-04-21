@@ -110,6 +110,9 @@ void test_backward_cpu() {
     float expected_dW[] = {0.5*1, 0.5*2, -1.0*1, -1.0*2};  // xᵗ * grad_out
     float expected_db[] = {0.5f, -1.0f};
 
+    for(int i = 0; i < 4; i++) std::cout << "W[" << i << "] : " << layer.host_grad_weights[i] << std::endl;
+    for(int i = 0; i < 2; i++) std::cout << "b[" << i << "] : " << layer.host_grad_biases[i] << std::endl;
+
     for (int i = 0; i < 4; i++) assert(almost_equal(layer.host_grad_weights[i], expected_dW[i]));
     for (int i = 0; i < 2; i++) assert(almost_equal(layer.host_grad_biases[i], expected_db[i]));
 
@@ -169,5 +172,5 @@ int main() {
   test_backward_cpu();
   test_backward_gpu();
 
-  std::cout << "Linear Tests passed!\n";
+  std::cout << "All Linear Tests passed!\n";
 }
