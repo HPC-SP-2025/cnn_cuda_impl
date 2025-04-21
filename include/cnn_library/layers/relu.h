@@ -41,7 +41,7 @@ public:
     float* forward(float* input) override;
 
     // Backward pass override
-    void backward(float* grad_input, float* grad_output) override;
+    float* backward(float* grad_input) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
