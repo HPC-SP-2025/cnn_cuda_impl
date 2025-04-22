@@ -12,6 +12,7 @@ file(GLOB SRC_FILES
   ${CMAKE_SOURCE_DIR}/src/layers/relu.cu
   ${CMAKE_SOURCE_DIR}/src/nn/sequential.cpp
   ${CMAKE_SOURCE_DIR}/src/layers/softmax.cu
+  ${CMAKE_SOURCE_DIR}/src/layers/cross_entropy_loss.cu
 )
 list(APPEND SOURCES ${SRC_FILES})
 

@@ -32,7 +32,7 @@ class Cross_Entropy_Loss : public Loss {
     float *d_loss;
 };
 
-__global__ void forward_cel_kernel(const float *pred, float *target, float *loss, int n, int num_classes);
-__global__ void backward_cel_kernel(float *grad_output, float *pred, float *target, int n, int num_classes);
+// __global__ void forward_cel_kernel(const float *pred, float *target, float *loss, int n, int num_classes);
+// __global__ void backward_cel_kernel(float *grad_output, float *pred, float *target, int n, int num_classes);
 
 #endif // LOSS_H
