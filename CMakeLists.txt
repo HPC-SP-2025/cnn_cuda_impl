@@ -13,10 +13,11 @@ file(GLOB SRC_FILES
   ${CMAKE_SOURCE_DIR}/src/nn/sequential.cpp
   ${CMAKE_SOURCE_DIR}/src/layers/softmax.cu
   ${CMAKE_SOURCE_DIR}/src/layers/cross_entropy_loss.cu
+  ${CMAKE_SOURCE_DIR}/src/layers/linear.cu
 )
 list(APPEND SOURCES ${SRC_FILES})
 
-list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/test/test_sequential.cpp)
+list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/test/test_sequential.cu)
 
 foreach(SOURCE_FILE ${SOURCES})
     message(STATUS "Detected source file: ${SOURCE_FILE}")

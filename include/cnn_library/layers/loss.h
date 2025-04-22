@@ -32,6 +32,13 @@ class Loss : public Layer {
 
     int getDevice() override { return this->device; }
 
+    // Initialize weights
+    void initializeWeights() override {}
+
+    void setParameters(const std::vector<float> &parameters) {};
+
+    
+
   private:
   protected:
     float *target;

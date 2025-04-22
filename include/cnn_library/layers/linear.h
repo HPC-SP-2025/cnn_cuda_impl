@@ -1,7 +1,7 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
-#include "../layers/base_layer.h"
+#include "base_layer.h"
 #include <random>
 #include <vector>
 
@@ -12,13 +12,13 @@ class Linear : public Layer {
     float *cached_input;
 
   public:
-    // TODO: Remove after testing
-    float* host_grad_weights;
-    float* host_grad_biases;
-    float* device_grad_weights;
-    float* device_grad_biases;
+    // // TODO: Remove after testing
+    // float* host_grad_weights;
+    // float* host_grad_biases;
+    // float* device_grad_weights;
+    // float* device_grad_biases;
     // Constructor
-    Linear(size_t input_size, size_t output_size, size_t batch_size = 1);
+    Linear(size_t input_size, size_t output_size, size_t batch_size);
 
     // Destructor
     ~Linear();
@@ -56,6 +56,9 @@ class Linear : public Layer {
     // Update weights
     void updateParameters(float learning_rate) override;
 
+    // Set parameters
+    void setParameters(const std::vector<float> &parameters) override;
+
     // Get and set weights and biases
     void setWeights(float *weights);
     void setBiases(float *biases);
@@ -74,17 +77,17 @@ class Linear : public Layer {
     float *backwardGPU(float *grad_input);
 };
 
-__global__ void forward_kernel(float *input, float *weights, float *biases, float *output, size_t input_size, size_t output_size, size_t batch_size);
+// __global__ void forward_kernel(float *input, float *weights, float *biases, float *output, size_t input_size, size_t output_size, size_t batch_size);
 
-__global__ void backward_input_kernel(float *grad_output, float *weights, float *grad_input, size_t input_size, size_t output_size, size_t batch_size);
+// __global__ void backward_input_kernel(float *grad_output, float *weights, float *grad_input, size_t input_size, size_t output_size, size_t batch_size);
 
-__global__ void backward_weight_kernel(float *input, float *grad_output, float *grad_weights, size_t input_size, size_t output_size, size_t batch_size);
+// __global__ void backward_weight_kernel(float *input, float *grad_output, float *grad_weights, size_t input_size, size_t output_size, size_t batch_size);
 
-__global__ void backward_bias_kernel(float *grad_output, float *grad_biases, size_t output_size, size_t batch_size);
+// __global__ void backward_bias_kernel(float *grad_output, float *grad_biases, size_t output_size, size_t batch_size);
 
-__global__ void update_parameters_kernel(float* weights, float* grad_weights,
-    float* biases, float* grad_biases,
-    float learning_rate,
-    size_t weight_size, size_t bias_size);
+// __global__ void update_parameters_kernel(float* weights, float* grad_weights,
+//     float* biases, float* grad_biases,
+//     float learning_rate,
+//     size_t weight_size, size_t bias_size);
 
 #endif // LINEAR_H

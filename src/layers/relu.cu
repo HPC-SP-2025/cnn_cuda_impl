@@ -56,11 +56,20 @@ float* ReLU::forward(float* input){
         size_t blocks = (output_size + threads_per_block - 1) / threads_per_block;
         forwardKernelReLU<<< blocks, threads_per_block >>>(input, this->device_forward_buffer, output_size, batch_size);
         cudaDeviceSynchronize();
-        // For testing ReLU forward
-        cudaMemcpy(this->host_forward_buffer, this->device_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyDeviceToHost);
-        return this->host_forward_buffer;
-        //// To pass onto next layer
-        //return this->device_forward_buffer;
+
+        float* temp_buffer = (float*)malloc(sizeof(float) * output_size * batch_size);
+        cudaMemcpy(temp_buffer, this->device_forward_buffer, sizeof(float) * output_size * batch_size, cudaMemcpyDeviceToHost);
+        for (size_t i = 0; i < output_size * batch_size; i++) {
+            std::cout << "device_forward_buffer[" << i << "] = " << temp_buffer[i] << std::endl;
+        }
+        free(temp_buffer);
+
+        
+        // // For testing ReLU forward
+        // cudaMemcpy(this->host_forward_buffer, this->device_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyDeviceToHost);
+        // return this->host_forward_buffer;
+        // To pass onto next layer
+        return this->device_forward_buffer;
     }
 }
 

@@ -1,6 +1,10 @@
 #include "../../include/cnn_library/nn/sequential.h"
 #include "../../include/cnn_library/layers/loss.h"
 #include <iostream>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <sstream>
 
 // Constructor
 Sequential::Sequential(int input_size, int output_size) {
@@ -39,17 +43,17 @@ float* Sequential::forward(float *input) {
     for (Layer *layer : layers) {
 
         // Print the pointers for debugging
-        std::cout << std::endl;
-        std::cout << "Layer: " << layer->getLayerName() << std::endl;
-        std::cout << " Current input pointer: " << current_input << std::endl;
-        std::cout << "Layer output size: " << layer->getOutputSize() << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "Layer: " << layer->getLayerName() << std::endl;
+        // std::cout << " Current input pointer: " << current_input << std::endl;
+        // std::cout << "Layer output size: " << layer->getOutputSize() << std::endl;
 
         // Call the forward method of each layer
         current_output = layer->forward(current_input);
 
-        std::cout << "Forward Called" << std::endl;
-        std::cout << "Current output pointer: " << current_output << std::endl;
-        std::cout << "Layer output size: " << layer->getOutputSize() << std::endl;
+        // std::cout << "Forward Called" << std::endl;
+        // std::cout << "Current output pointer: " << current_output << std::endl;
+        // std::cout << "Layer output size: " << layer->getOutputSize() << std::endl;
 
 
 
@@ -135,3 +139,47 @@ void Sequential::saveModel(const string filename) {
     // Logic to save the model to a file
     std::cout << "Model saved to: " << filename << std::endl;
 }
+
+
+void Sequential::loadModel(const string filename) 
+{
+    std::ifstream file(filename);  // Open the file for reading
+
+    if (!file.is_open()) {  // Check if file is successfully opened
+        std::cerr << "Could not open the file!" << std::endl;
+        return;
+    }
+
+    std::string line;
+    int line_number = 0;
+    while (std::getline(file, line)) 
+    {  
+        std::istringstream iss(line);
+        std::vector<float> values;
+        float value;
+
+        while (iss >> value) {
+            values.push_back(value);
+        }
+
+        if (line_number < layers.size()) {
+            layers[line_number]->setParameters(values);
+        } else {
+            std::cerr << "Error: More weights in the file than layers in the model!" << std::endl;
+            break;
+        }
+        line_number++;
+
+    
+    }
+    file.close();  // Close the file after reading
+
+    std::cout << "Model loaded from: " << filename << std::endl;
+
+
+
+
+
+}
+
+

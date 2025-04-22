@@ -49,6 +49,9 @@ class Sequential {
 
     // Save Params
     void summary();
+
+    // Load Model Weights
+    void loadModel(const string filename);
 };
 
 #endif // SEQUENTIAL_H

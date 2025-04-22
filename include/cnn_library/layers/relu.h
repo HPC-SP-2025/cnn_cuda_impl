@@ -61,6 +61,9 @@ public:
     // Get number of parameters
     size_t numParams() override;
 
+    // Set Parameters
+    void setParameters(const std::vector<float>& parameters) {};
+
 private:
 
     // CPU IMPLEMENTATION

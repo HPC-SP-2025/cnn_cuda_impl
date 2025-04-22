@@ -22,6 +22,10 @@ class MSE_Loss : public Loss {
 
     virtual void setTarget(float *target);
 
+    void setParameters(const std::vector<float> &parameters) {};
+
+    
+
   private:
     float forward_CPU(const float *pred, float *target);
     void backward_CPU(float *grad_output, float *pred, float *target);

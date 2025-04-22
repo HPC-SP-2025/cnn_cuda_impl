@@ -103,12 +103,16 @@ class Layer {
     /* Returns the device state of the layer*/
     virtual int getDevice() = 0;
 
+    // SET WEIGHTS
+    /* This function will set the weights of the layer from a loaded file */
+    virtual void setParameters(const vector<float>& parameters) = 0;
+
     // -------------------------------------------------------------------
     // OPTIONAL FUNCTIONS
     // -------------------------------------------------------------------
 
     // UPDATE THE PARAMETERS
-    /* Carries out hte Gradient Update operation using the weights and gradients
+    /* Carries out the Gradient Update operation using the weights and gradients
     calculated. It updates the weights and biases with the updated weights and biases*/
     virtual void updateParameters(float learning_rate) {}
 

@@ -54,6 +54,9 @@ public:
     // Get device state of the layer
     int getDevice() override;
 
+    // Initialize weights
+    void setParameters(const std::vector<float> &parameters) {};
+
 private:
 
     // CPU IMPLEMENTATION

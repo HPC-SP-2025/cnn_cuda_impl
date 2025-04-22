@@ -119,7 +119,8 @@ float *Cross_Entropy_Loss::backward(float *pred) {
 
 void Cross_Entropy_Loss::setDevice(int device) {
     this->device = device;
-    if (device) {
+    if (device) 
+    {
         cudaMalloc(&d_loss, sizeof(float));
         cudaMalloc(&device_backward_buffer, sizeof(float) * batch_size * input_size);
     }
