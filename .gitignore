@@ -8,3 +8,5 @@ __pycache__/
 *.pyo
 yes
 yes.pub
+build/
+model_weights.txt

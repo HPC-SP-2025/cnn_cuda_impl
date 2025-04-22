@@ -1,35 +1,47 @@
 #ifndef LOSS_H
 #define LOSS_H
 
-#include <vector>
-
-#include "cnn_library/layers/base_layer.h"
+#include "base_layer.h"
 
 class Loss : public Layer {
-public:
+  public:
     // Constructor
-    Loss();
-    
+    Loss() {};
+
     // Destructor
-    ~Loss();
+    ~Loss() override = default;
 
     // Forward pass override
-    void forward(const std::vector<float>& input, std::vector<float>& output) override;
+    virtual float *forward(float *pred) override = 0;
 
     // Backward pass override
-    void backward(const std::vector<float>& grad_output, std::vector<float>& grad_input) override;
+    virtual float *backward(float *pred) override = 0;
 
     // Set the device ID for the layer
-    void setDevice(int device) override;
+    virtual void setDevice(int device) override = 0;
 
-    // Get input size
-    size_t getInputSize() override;
+    virtual void setTarget(float *target) = 0;
 
-    // Get output size
-    size_t getOutputSize() override;
+    size_t getInputSize() { return input_size; };
 
-private:
+    size_t getOutputSize() { return 1; };
 
+    size_t numParams() override { return 0; };
+
+    string getLayerName() override { return this->layer_name; }
+
+    int getDevice() override { return this->device; }
+
+    // Initialize weights
+    void initializeWeights() override {}
+
+    void setParameters(const std::vector<float> &parameters) {};
+
+    
+
+  private:
+  protected:
+    float *target;
 };
 
 #endif // LOSS_H

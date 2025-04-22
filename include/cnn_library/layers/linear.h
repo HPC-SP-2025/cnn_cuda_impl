@@ -1,45 +1,33 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
+#include "base_layer.h"
+#include <random>
 #include <vector>
-# include "../layers/base_layer.h"
 
 class Linear : public Layer {
 
-private:
-    int input_size;
-    int output_size;
+  private:
+    // Cached input for backward pass
+    float *cached_input;
 
-    // Weights and biases as C type arrays
-    float* host_weights;
-    float* host_biases;
-    float* device_weights;
-    float* device_biases;
-
-    // Gradient arrays
-    float* host_grad_weights;
-    float* host_grad_biases;
-    float* device_grad_weights;
-    float* device_grad_biases;
-
-    // Intermediate arrays for forward and backward pass
-    float* host_buffer;
-    float* device_buffer;
-
-    
-
-public:
+  public:
+    // // TODO: Remove after testing
+    // float* host_grad_weights;
+    // float* host_grad_biases;
+    // float* device_grad_weights;
+    // float* device_grad_biases;
     // Constructor
-    Linear(int input_size, int output_size, int batch_size);
-    
+    Linear(size_t input_size, size_t output_size, size_t batch_size);
+
     // Destructor
     ~Linear();
 
     // Forward pass override
-    void forward(float* input, float* output) override;
+    float *forward(float *input) override;
 
     // Backward pass override
-    void backward(float* grad_input, float* grad_output) override;
+    float *backward(float *grad_input) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
@@ -50,8 +38,56 @@ public:
     // Get output size
     size_t getOutputSize() override;
 
-private:
+    // Number of weights
+    size_t numParams() override;
 
+    // Name of the layer
+    std::string getLayerName() override;
+
+    // Get device
+    int getDevice() override;
+
+    // Initialize weights
+    void initializeWeights() override;
+
+    // Initialize biases
+    void initializeBiases() override;
+
+    // Update weights
+    void updateParameters(float learning_rate) override;
+
+    // Set parameters
+    void setParameters(const std::vector<float> &parameters) override;
+
+    // Get and set weights and biases
+    void setWeights(float *weights);
+    void setBiases(float *biases);
+    void getWeights(float *weights);
+    void getBiases(float *biases);
+
+  private:
+    // CPU Forward Pass
+    // Returns the pointer to the output
+    float *forwardCPU(float *input);
+    // CPU Backward Pass
+    float *backwardCPU(float *grad_input);
+    // GPU Forward Pass
+    float *forwardGPU(float *input);
+    // GPU Backward Pass
+    float *backwardGPU(float *grad_input);
 };
 
-#endif // LOSS_H
+// __global__ void forward_kernel(float *input, float *weights, float *biases, float *output, size_t input_size, size_t output_size, size_t batch_size);
+
+// __global__ void backward_input_kernel(float *grad_output, float *weights, float *grad_input, size_t input_size, size_t output_size, size_t batch_size);
+
+// __global__ void backward_weight_kernel(float *input, float *grad_output, float *grad_weights, size_t input_size, size_t output_size, size_t batch_size);
+
+// __global__ void backward_bias_kernel(float *grad_output, float *grad_biases, size_t output_size, size_t batch_size);
+
+// __global__ void update_parameters_kernel(float* weights, float* grad_weights,
+//     float* biases, float* grad_biases,
+//     float learning_rate,
+//     size_t weight_size, size_t bias_size);
+
+#endif // LINEAR_H
