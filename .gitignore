@@ -9,3 +9,4 @@ __pycache__/
 yes
 yes.pub
 build/
+model_weights.txt

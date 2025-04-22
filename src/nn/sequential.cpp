@@ -164,7 +164,8 @@ void Sequential::loadModel(const string filename)
 
         if (line_number < layers.size()) {
             layers[line_number]->setParameters(values);
-        } else {
+        } else 
+        {
             std::cerr << "Error: More weights in the file than layers in the model!" << std::endl;
             break;
         }
