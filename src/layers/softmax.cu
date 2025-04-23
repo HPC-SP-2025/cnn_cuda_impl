@@ -105,9 +105,10 @@ void Softmax::backwardCpuSoftmax(float* grad_input, float* grad_output) {
 
 
 void Softmax::forwardGpuSoftmax(float* input, float* output) {
-    //    size_t blocks = (this->output_size + this->threads_per_block - 1) / this->threads_per_block;
-    //    forwardKernelSoftmax<<<blocks, this->threads_per_block>>>(input, this->device_forward_buffer);
-    //    cudaDeviceSynchronize();
+    size_t blocks = (this->batch_size + 1024 - 1) / 1024;
+    size_t threads_per_block = (this->batch_size + blocks - 1) / blocks;
+	forwardKernelSoftmax<<<blocks, threads_per_block>>>(input, this->device_forward_buffer, this->output_size, this->batch_size);
+	cudaDeviceSynchronize();
 }
 
 void Softmax::backwardGpuSoftmax(float* grad_input, float* grad_output) {
@@ -117,7 +118,29 @@ void Softmax::backwardGpuSoftmax(float* grad_input, float* grad_output) {
 }
 
 __global__ void forwardKernelSoftmax(float* input, float* output, size_t num_classes, size_t batch_size) {
-    // TODO: Implement this kernel
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < batch_size) {
+        size_t offset = idx * num_classes;
+        float* current_input = input + offset;
+        float* current_output = output + offset;
+
+        // Find max for numerical stability
+        float max_val = *std::max_element(current_input, current_input + num_classes);
+
+        float sum = 0.0f;
+        for (size_t i = 0; i < num_classes; ++i) {
+            current_output[i] = exp(current_input[i] - max_val);
+            sum += current_output[i];
+        }
+
+        // Just to be sure, can only happen if all val in exp(val) are -inf
+        if (sum == 0.0f) sum = 1e-6f; // TODO: Maybe define this constant globally?
+
+        // Normalize
+        for (size_t i = 0; i < num_classes; ++i) {
+            current_output[i] /= sum;
+        }
+    }
 }
 
 __global__ void backwardKernelSoftmax(float* grad_input, float* grad_output, size_t num_classes, size_t batch_size) {

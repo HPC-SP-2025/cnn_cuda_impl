@@ -31,7 +31,7 @@ Sequential *create_mnist_model(unsigned int input_size, unsigned int batch_size,
     model->addLayer(new Linear(1024, 128, batch_size)); // Fully connected layer to 128 neurons
     model->addLayer(new ReLU());
     model->addLayer(new Linear(128, num_classes, batch_size)); // Fully connected layer to 10 classes
-    model->addLayer(new Softmax(num_classes, num_classes, batch_size));
+    model->addLayer(new Softmax(num_classes, batch_size));
 
     return model;
 }
