@@ -142,6 +142,7 @@ int main() {
     test_softmax_forward_cpu_numerical_stability();
     test_softmax_backward_cpu_basic_case();
     test_softmax_forward_gpu_basic_case();
+    test_softmax_backward_gpu_basic_case();
 
     std::cout << "All tests passed.\n";
     return 0;
