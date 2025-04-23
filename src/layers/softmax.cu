@@ -55,6 +55,9 @@ Softmax::Softmax(size_t num_classes, size_t batch_size) {
 	this->host_backward_buffer = (float*)malloc(sizeof(float) * this->input_size * this->batch_size);
 	this->device_forward_buffer = nullptr;
 	this->device_backward_buffer = nullptr;
+
+    this->test_mode = 0;  // 0 for false, 1 for true i.e. test mode active
+
 	std::cout << "Softmax constructor call\n";
 }
 
@@ -77,7 +80,13 @@ float* Softmax::forward(float* input) {
 	}
 	else {
 		forwardGpuSoftmax(input, this->device_forward_buffer);
-		return this->device_forward_buffer;
+        if (test_mode) {
+        	cudaMemcpy(this->host_forward_buffer, this->device_forward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyDeviceToHost);
+        	return this->host_forward_buffer;
+        }
+        else {
+			return this->device_forward_buffer;
+        }
 	}
 }
 
@@ -89,7 +98,13 @@ float* Softmax::backward(float* grad_input) {
 	}
 	else {
 		backwardGpuSoftmax(grad_input, this->device_backward_buffer);
-		return this->device_backward_buffer;
+        if (test_mode) {
+			cudaMemcpy(this->host_backward_buffer, this->device_backward_buffer, sizeof(float)*output_size*batch_size, cudaMemcpyDeviceToHost);
+			return this->host_backward_buffer;
+        }
+        else {
+			return this->device_backward_buffer;
+        }
 	}
 }
 
@@ -111,6 +126,10 @@ void Softmax::setDevice(int device) {
 }
 
 int Softmax::getDevice() { return this->device; }
+
+void Softmax::setTestMode(int test_mode) {
+	this->test_mode = test_mode;  // 0 for false, 1 for true i.e. test mode active
+}
 
 void Softmax::forwardCpuSoftmax(float* input, float* output) {
 	for (size_t b = 0; b < this->batch_size; ++b) {
@@ -153,6 +172,6 @@ void Softmax::forwardGpuSoftmax(float* input, float* output) {
 void Softmax::backwardGpuSoftmax(float* grad_input, float* grad_output) {
 	size_t blocks = (this->batch_size + 1024 - 1) / 1024;
 	size_t threads_per_block = (this->batch_size + blocks - 1) / blocks;
-	forwardKernelSoftmax<<<blocks, threads_per_block>>>(grad_input, grad_output, this->input_size, this->batch_size);
+	backwardKernelSoftmax<<<blocks, threads_per_block>>>(grad_input, grad_output, this->input_size, this->batch_size);
 	cudaDeviceSynchronize();
 }
