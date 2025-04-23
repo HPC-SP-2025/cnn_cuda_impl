@@ -23,6 +23,8 @@ protected:
     float* host_backward_buffer;
     float* device_backward_buffer;
 
+    int test_mode;
+
 public:
     // Constructor
     Softmax(size_t num_classes, size_t batch_size);
@@ -56,6 +58,9 @@ public:
 
     // Initialize weights
     void setParameters(const std::vector<float> &parameters) {};
+
+    // To set test mode
+    void setTestMode(int device);
 
 private:
 
