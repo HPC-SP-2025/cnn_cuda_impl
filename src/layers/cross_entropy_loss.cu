@@ -107,7 +107,7 @@ float *Cross_Entropy_Loss::forward(float *pred) {
 
 float *Cross_Entropy_Loss::backward(float *pred) {
     if (this->device) {
-        int num_blocks = (input_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+        int num_blocks = (batch_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
         backward_cel_kernel<<<num_blocks, BLOCK_SIZE>>>(device_backward_buffer, pred, this->target, batch_size,
                                                         input_size);
         return device_backward_buffer;
@@ -119,8 +119,7 @@ float *Cross_Entropy_Loss::backward(float *pred) {
 
 void Cross_Entropy_Loss::setDevice(int device) {
     this->device = device;
-    if (device) 
-    {
+    if (device) {
         cudaMalloc(&d_loss, sizeof(float));
         cudaMalloc(&device_backward_buffer, sizeof(float) * batch_size * input_size);
     }
