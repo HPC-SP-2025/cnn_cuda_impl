@@ -172,6 +172,6 @@ void Softmax::forwardGpuSoftmax(float* input, float* output) {
 void Softmax::backwardGpuSoftmax(float* grad_input, float* grad_output) {
 	size_t blocks = (this->batch_size + 1024 - 1) / 1024;
 	size_t threads_per_block = (this->batch_size + blocks - 1) / blocks;
-	forwardKernelSoftmax<<<blocks, threads_per_block>>>(grad_input, grad_output, this->input_size, this->batch_size);
+	backwardKernelSoftmax<<<blocks, threads_per_block>>>(grad_input, grad_output, this->input_size, this->batch_size);
 	cudaDeviceSynchronize();
 }
