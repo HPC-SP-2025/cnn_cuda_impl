@@ -60,7 +60,6 @@ float* ReLU::forward(float* input){
         float* temp_buffer = (float*)malloc(sizeof(float) * output_size * batch_size);
         cudaMemcpy(temp_buffer, this->device_forward_buffer, sizeof(float) * output_size * batch_size, cudaMemcpyDeviceToHost);
         for (size_t i = 0; i < output_size * batch_size; i++) {
-            std::cout << "device_forward_buffer[" << i << "] = " << temp_buffer[i] << std::endl;
         }
         free(temp_buffer);
 
@@ -83,10 +82,10 @@ float* ReLU::backward(float* grad_input){
         size_t blocks = (input_size + threads_per_block - 1) / threads_per_block;
         backwardKernelReLU<<< blocks, threads_per_block >>>(grad_input, this->device_backward_buffer, this->layer_input_ptr, input_size, batch_size);
         // For testing ReLU backward
-        cudaMemcpy(this->host_backward_buffer, this->device_backward_buffer, sizeof(float)*input_size*batch_size, cudaMemcpyDeviceToHost);
-        return this->host_backward_buffer;
-        //// To pass onto next layer
-        //return this->device_backward_buffer;
+        // cudaMemcpy(this->host_backward_buffer, this->device_backward_buffer, sizeof(float)*input_size*batch_size, cudaMemcpyDeviceToHost);
+        // return this->host_backward_buffer;
+        // To pass onto next layer
+        return this->device_backward_buffer;
     }
 }
 

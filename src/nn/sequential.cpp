@@ -35,45 +35,16 @@ float* Sequential::forward(float *input) {
     float *current_input = input;
     float *current_output = nullptr;
 
-    // Print the pointers for debugging
-    std::cout << "Input pointer: " << input << std::endl;
-    std::cout << "Current input pointer: " << current_input << std::endl;
-    std::cout << "Current output pointer: " << current_output << std::endl;
+    // // Print the pointers for debugging
+    // std::cout << "Input pointer: " << input << std::endl;
+    // std::cout << "Current input pointer: " << current_input << std::endl;
+    // std::cout << "Current output pointer: " << current_output << std::endl;
 
-    for (Layer *layer : layers) {
-
-        // Print the pointers for debugging
-        // std::cout << std::endl;
-        // std::cout << "Layer: " << layer->getLayerName() << std::endl;
-        // std::cout << " Current input pointer: " << current_input << std::endl;
-        // std::cout << "Layer output size: " << layer->getOutputSize() << std::endl;
-
-        // Call the forward method of each layer
+    for (Layer *layer : layers) 
+    {
         current_output = layer->forward(current_input);
-
-        // std::cout << "Forward Called" << std::endl;
-        // std::cout << "Current output pointer: " << current_output << std::endl;
-        // std::cout << "Layer output size: " << layer->getOutputSize() << std::endl;
-
-
-
-        // Update current_input to point to the current_output
         current_input = current_output;
-
-
     }
-
-    // // Copy the final output to the provided output pointer
-    // std::copy(current_input, current_input + layers.back()->getOutputSize(), output);
-
-    // // Free the memory of the last current_input if it was dynamically allocated
-    // if (current_input != input) {
-    //     delete[] current_input;
-    // }
-
-    // Print the final output for debugging
-    std::cout << "Final output pointer: " << current_output << std::endl;
-
     return current_output; // Return the final output
 }
 
@@ -81,22 +52,35 @@ float* Sequential::forward(float *input) {
 float Sequential::backward(float *predicted, float *ground_truth, Loss *loss_layer) {
     float loss_value = 0.0f;
     float *loss_ptr;
-    float *output = nullptr;
-    float *input = nullptr;
+    float *output_grad = nullptr;
+    float *input_grad = nullptr;
 
-    // Forward Pass
+    
+    
+
+    
+
+    // Forward Pass through Loss Layer
     loss_layer->setTarget(ground_truth);
     loss_ptr = loss_layer->forward(predicted);
     loss_value = loss_ptr[0];
+    cout << "Loss Value: " << loss_value << std::endl;
+
+
+
+
 
     // Backward Pass through the loss layer
-    output = loss_layer->backward(predicted);
+    input_grad = loss_layer->backward(predicted);
+
+
 
     // Traverse the layers in reverse order
-    for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
-        Layer *layer = *it;
-        input = layer->backward(output);
-        output = input; // Update output for the next layer in reverse
+    for (int i = layers.size() - 1; i >= 0; i--) 
+    {
+        Layer *layer = layers[i];
+        output_grad = layer->backward(input_grad);
+        input_grad = output_grad; // Update output for the next layer in reverse
     }
 
     return loss_value;
@@ -164,7 +148,8 @@ void Sequential::loadModel(const string filename)
 
         if (line_number < layers.size()) {
             layers[line_number]->setParameters(values);
-        } else 
+        } 
+        else 
         {
             std::cerr << "Error: More weights in the file than layers in the model!" << std::endl;
             break;

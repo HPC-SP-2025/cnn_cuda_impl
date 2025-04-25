@@ -281,10 +281,10 @@ void Linear::initializeWeights() {
 
     // Initialize weights
     for (size_t i = 0; i < input_size * output_size; i++) {
-        // host_weights[i] = d(gen);
+        host_weights[i] = d(gen);
 
         // To test weights use a random value
-        host_weights[i] = 10.0f; // d(gen);
+        // host_weights[i] = 10.0f; // d(gen);
     }
 }
 
@@ -309,6 +309,8 @@ void Linear::setParameters(const std::vector<float> &parameters) {
 
     // Set biases
     std::memcpy(host_biases, parameters.data() + weights_size, biases_size * sizeof(float));
+
+    
 }
 
 // Get input size

@@ -22,7 +22,7 @@ class MSE_Loss : public Loss {
 
     virtual void setTarget(float *target);
 
-    void setParameters(const std::vector<float> &parameters) {};
+    
 
     
 

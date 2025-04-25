@@ -1,4 +1,6 @@
 #include "../../include/cnn_library/layers/cross_entropy_loss.h"
+#include <iostream>
+using namespace std;
 
 #define BLOCK_SIZE 256
 #define EPSILON 1e-9
@@ -95,10 +97,13 @@ Cross_Entropy_Loss::~Cross_Entropy_Loss() {
 }
 
 float *Cross_Entropy_Loss::forward(float *pred) {
+
     float loss;
     if (this->device) {
+        
         loss = forward_GPU(pred, this->target);
-    } else {
+    } 
+    else {
         loss = forward_CPU(pred, this->target);
     }
     host_forward_buffer[0] = loss;

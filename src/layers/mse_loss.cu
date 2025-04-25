@@ -1,6 +1,7 @@
 #include "include/cnn_library/layers/mse_loss.h"
 #include <stdexcept>
 #include <vector>
+#include <iostream>
 
 #define BLOCK_SIZE 256
 
@@ -22,9 +23,11 @@ MSE_Loss::~MSE_Loss() {
 }
 
 float *MSE_Loss::forward(float *pred) {
+    cout << "Forward" << endl;
     float loss;
     if (this->device) {
         cudaMemset(d_loss, 0, sizeof(float));
+       
         int num_blocks = (input_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
         forward_mse_kernel<<<num_blocks, BLOCK_SIZE>>>(pred, this->target, d_loss, batch_size);
         cudaMemcpy(&loss, d_loss, sizeof(float), cudaMemcpyDeviceToHost);

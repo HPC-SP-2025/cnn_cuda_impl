@@ -25,37 +25,39 @@ float* createAndReturnRandomArray(unsigned int size)
 
 int main(){
 
-    int size = 5;    
+    int size = 700; 
+    int output_size = 10;   
     int device = 1;
+    float learning_rate = 0.01;
 
 
     // Create a Sequential model
-    Sequential* model = new Sequential(5, 1); // Example input size of 784 (28x28 image flattened) and output size of 10 (number of classes)
+    Sequential* model = new Sequential(size, output_size); // Example input size of 784 (28x28 image flattened) and output size of 10 (number of classes)
 
     cout << "Model created with input size: " << model->getInputSize() << " and output size: " << model->getOutputSize() << endl;
-    model->addLayer(new Linear(5, 128, 1));
-    model->addLayer(new ReLU(128, 128, 1)); // Example layer with input size 784, output size 10, and batch size 32
-    model->addLayer(new Linear(128, 1, 1)); // Example layer with input size 784, output size 10, and batch size 32
+    model->addLayer(new Linear(size, 1024, 1));
+    model->addLayer(new ReLU(1024, 1024, 1)); // Example layer with input size 784, output size 10, and batch size 32
+    model->addLayer(new Linear(1024, 256, 1)); // Example layer with input size 784, output size 10, and batch size 32
+    model->addLayer(new ReLU(256, 256, 1)); // Example layer with input size 784, output size 10, and batch size 32
+    model->addLayer(new Linear(256, output_size, 1)); // Example layer with input size 784, output size 10, and batch size 32
+    model->addLayer(new Softmax(output_size, output_size)); // Example layer with input size 784, output size 10, and batch size 32
     model->loadModel("/home/MORGRIDGE/akazi/HPC_Assignments/Final_Project/CNN_Implementation_on_CUDA/model_weights.txt");
+    model->summary();
 
-    // LOSS FUNCTION
-    // Cross_Entropy_Loss* loss_fn = new Cross_Entropy_Loss(5, 1); // Example layer with input size 784, output size 10, and batch size 32
-    // loss_fn->setTarget(new float[1]{4}); // Set the target for the loss function
-    // loss_fn->setDevice(1); // Set the device to CPU (0 for CPU, 1 for GPU)
+    // Loss Function
+    Cross_Entropy_Loss* loss_fn = new Cross_Entropy_Loss(output_size, 1);
 
 
     if (device == 1)
     {
         // Set the device for the model
         model->setDevice(1); // Set the device to GPU (0 for CPU, 1 for GPU)
+        loss_fn->setDevice(1); // Set the device to GPU (0 for CPU, 1 for GPU)
         cout << "Model device set to GPU" << endl;
     }
 
 
-    
-    
-    
-    for(int j = 0; j < 1; j++)
+    for(int j = 0; j < 3; j++)
     {
         cout << "Iteration: " << j << endl;
 
@@ -76,55 +78,62 @@ int main(){
 
         }
 
-        // Grouth Truth
-        // int targetIndex = 0;
-        // for (int i = 1; i < size; ++i) 
-        // {
-        //     if (arr[i] > arr[targetIndex]) 
-        //     {
-        //         targetIndex = i;
-        //     }
-        // }
-
-        // loss_fn->setTarget(new float[1]{static_cast<float>(targetIndex)}); // Set the target for the loss function
-        // float* arr = new float[size]{-1.0, -.05, 0, 0, 0.8}; // Example input array
-        cout << "Image Pointer: " << arr << endl;
-
-        // Add layers to the model
-        float* output = model->forward(arr);
-        // float* loss_value = loss_fn->forward(output);
-        // cout << "Loss Value: " << *loss_value << endl;
-
-        // Move the output from device to host
-        float* h_output = new float[model->getOutputSize()];
-        if (device == 1)
-        {   
-            cudaMemcpy(h_output, output, model->getOutputSize() * sizeof(float), cudaMemcpyDeviceToHost);
+        // Groutd turth
+        float* h_target = new float[1]{0};
+        float* target;
+        // Allocate memory for the target on the device
+        if (device == 0)
+        { 
+            target = h_target;
+        }
+        else
+        { 
+            cudaMalloc((void**)&target, sizeof(float));
+            cudaMemcpy(target, h_target, sizeof(float), cudaMemcpyHostToDevice);
         }
 
-        else if (device == 0)
-        {   
+
+    
+
+
+        // Forward Pass the Model
+        float* output = model->forward(arr);
+
+        // Move the output from device to host and print the values
+        float* h_output = new float[output_size];
+        if (device == 1)
+        {
+            cudaMemcpy(h_output, output, output_size * sizeof(float), cudaMemcpyDeviceToHost);
+        }
+        else
+        {
             h_output = output;
         }
 
-  
-        // Use h_output for further processing if needed
-        
-
-        // // Print the array
-        // cout << "";
-        // for (int i = 0; i < size; ++i) {
-        //     cout << arr[i] << " ";
-        //     // printf("%f ", arr[i]);
-        // }
-        // cout << endl;
-
-        cout << endl;
-        cout << "";
-        for (int i = 0; i < model->getOutputSize(); ++i) {
+        cout << "Output values: ";
+        for (int i = 0; i < output_size; ++i)
+        {
             cout << h_output[i] << " ";
         }
         cout << endl;
+
+        // Free the host memory
+        delete[] h_output;
+
+
+
+
+
+        // Backward Pass the Model
+        float loss_value = model->backward(output, target ,loss_fn);
+
+        //Print the Loss
+        cout << "Loss: " << loss_value << endl;
+
+        // Update the weights
+        model->updateParameters(learning_rate); // Example learning rate of 0.01
+
+        // Move the output from device to host
 
  }
     
