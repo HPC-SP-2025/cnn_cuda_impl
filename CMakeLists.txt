@@ -17,7 +17,8 @@ file(GLOB SRC_FILES
 )
 list(APPEND SOURCES ${SRC_FILES})
 
-list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/test/test_sequential.cu)
+list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/main.cu)
+list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/model.cpp)
 
 foreach(SOURCE_FILE ${SOURCES})
     message(STATUS "Detected source file: ${SOURCE_FILE}")

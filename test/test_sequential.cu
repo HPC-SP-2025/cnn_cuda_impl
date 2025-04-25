@@ -75,7 +75,6 @@ int main(){
         { 
             cudaMalloc((void**)&arr, size * sizeof(float));
             cudaMemcpy(arr, h_arr, size * sizeof(float), cudaMemcpyHostToDevice);
-
         }
 
         // Groutd turth
