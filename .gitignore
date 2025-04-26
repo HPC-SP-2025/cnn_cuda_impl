@@ -10,6 +10,5 @@ yes
 yes.pub
 build/
 model_weights.txt
-MNIST_Dataset/
 OpenCV_Test/
 image_fetching/
