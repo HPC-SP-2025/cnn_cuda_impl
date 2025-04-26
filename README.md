@@ -14,3 +14,14 @@ cnn_library/layers/*.c - implementation for each layer
 3. Sai Krishna - Loss
 4. Pavan - Linear
 5. Bhuyashi - ReLU
+
+## Instructions to Build
+1. mkdir build
+2. cd build
+3. cmake ..
+4. make
+5. ./MyCudaProject
+
+I am adding the MNIST dataset into the repo itself. I found a byte version that is fairly small
+
+

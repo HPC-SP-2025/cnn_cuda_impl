@@ -19,11 +19,17 @@ Sequential *create_mnist_model(unsigned int input_size, unsigned int batch_size,
     // Add layers to the model
     model->addLayer(new Linear(input_size, 1024,batch_size));
     model->addLayer(new ReLU(1024, 1024, batch_size)); 
+
     model->addLayer(new Linear(1024, 1024, batch_size));
     model->addLayer(new ReLU(1024, 1024, batch_size)); 
-    model->addLayer(new Linear(1024, 128, batch_size)); 
-    model->addLayer(new ReLU(128, 128, 1));
-    model->addLayer(new Linear(128, num_classes, batch_size));
+
+    model->addLayer(new Linear(1024, 512, batch_size)); 
+    model->addLayer(new ReLU(512, 512, batch_size));
+
+    model->addLayer(new Linear(512, 512, batch_size)); 
+    model->addLayer(new ReLU(512, 512, batch_size));
+
+    model->addLayer(new Linear(512, num_classes, batch_size));
     model->addLayer(new Softmax(num_classes, batch_size));
 
     // Return

@@ -1,5 +1,6 @@
 #include "include/cnn_library/layers/cross_entropy_loss.h"
 #include "include/cnn_library/layers/loss.h"
+#include "include/cnn_library/dataloader/dataloader.h"
 #include "model.h"
 #include <iostream>
 #include <vector>
@@ -15,9 +16,6 @@ float* createAndReturnRandomArray(unsigned int size, float value)
     }
     return constantArray;
 }
-
-
-
 
 void saveVectorToFile(const std::vector<float>& vec, const std::string& filename) {
     std::ofstream outFile(filename);
@@ -35,17 +33,21 @@ void saveVectorToFile(const std::vector<float>& vec, const std::string& filename
     std::cout << "Vector saved to " << filename << std::endl;
 }
 
+
+
 int main() {
 
-    // Hyperparameters
+    // HYPERPARAMETERS
     unsigned int batch_size = 1;
+    unsigned int acc_batch_size = 128;
     float lr = 0.00001;
-    int total_iterations = 100;
-    int device = 0; // 0 for CPU, 1 for GPU
-    unsigned int input_size = 768;
+    int total_iterations = 50000;
+    int device = 1; // 0 for CPU, 1 for GPU
+    unsigned int input_size = 784;
     unsigned int num_classes = 10;
 
-    string DATA_DIR = "";
+    string DATA_DIR = "/home/MORGRIDGE/akazi/HPC_Assignments/Final_Project/CNN_Implementation_on_CUDA/MNIST_Dataset/train-images-idx3-ubyte";
+    string LABEL_DIR = "/home/MORGRIDGE/akazi/HPC_Assignments/Final_Project/CNN_Implementation_on_CUDA/MNIST_Dataset/train-labels-idx1-ubyte";
 
 
     // Create the MNIST model
@@ -53,6 +55,10 @@ int main() {
 
     // Create a Loss Layer
     Cross_Entropy_Loss *loss_layer = new Cross_Entropy_Loss(num_classes, batch_size);
+
+    // Dataloader
+    DataLoader *dataloader = new DataLoader(DATA_DIR, LABEL_DIR, batch_size, 60000);
+
     
     // Set the device for the model
     if (device == 1)
@@ -69,17 +75,21 @@ int main() {
     std::cout << "Training on " << device << " for " << total_iterations << " iterations." << std::endl;
 
     // Create a random array for input data and labels ( Will be replaced with dataloader)
-    float *h_input_data = new float[batch_size * input_size * input_size];
-    float *h_label_vector = new float[1]{4};
+    float *h_input_data = new float[batch_size * input_size];
+    float *h_label_vector = new float[batch_size];
     float *input_data;;
     float *label_vector;
     std::vector<float> loss_value_array;
+    std::vector<float> iteration_wise_loss_array;
 
     // Iterate over the the data
     for (int iter = 0; iter < total_iterations; iter++) {
 
         // Fill the input data and labels with random values
-        h_input_data = createAndReturnRandomArray(input_size * input_size, 10.0f);
+        Batch batch_data = dataloader->load_batch(iter % 60000);
+        h_input_data = batch_data.images;
+        h_label_vector = batch_data.labels;
+        
 
         if (device == 0) 
         {
@@ -88,21 +98,14 @@ int main() {
         } 
         else 
         {
-            cudaMalloc((void**)&input_data, input_size * sizeof(float));
-            cudaMemcpy(input_data, h_input_data, input_size * sizeof(float), cudaMemcpyHostToDevice);
-            cudaMalloc((void**)&label_vector, 1 * sizeof(float));
-            cudaMemcpy(label_vector, h_label_vector, 1 * sizeof(float), cudaMemcpyHostToDevice);
+            cudaMalloc((void**)&input_data, input_size * batch_size * sizeof(float));
+            cudaMemcpy(input_data, h_input_data, input_size * batch_size * sizeof(float), cudaMemcpyHostToDevice);
+            cudaMalloc((void**)&label_vector, 1 * batch_size * sizeof(float));
+            cudaMemcpy(label_vector, h_label_vector, 1 * batch_size * sizeof(float), cudaMemcpyHostToDevice);
         }
 
         // Forwardfeed the model
         float* prediction = net->forward(input_data);
-
-
-        // Print Output
-        // for (unsigned int i = 0; i < batch_size * num_classes; ++i) {
-        //     std::cout << prediction[i] << " ";
-        // }
-        // std::cout << std::endl;
 
         // Backpropagation
         float loss_value = net->backward(prediction, label_vector, loss_layer);
@@ -111,13 +114,24 @@ int main() {
         net->updateParameters(lr);
 
         // Print the loss
-        std::cout << "Iteration: " << iter << ", Loss: " << loss_value << std::endl;
-        loss_value_array.push_back(loss_value);
-
-
+        if (iter % acc_batch_size == 0 && iter != 0) {
+            float mean_loss = 0.0f;
+            for (const auto& loss : loss_value_array) 
+            {
+            mean_loss += loss;
+            }
+            mean_loss =  mean_loss/loss_value_array.size();
+            std::cout << "Iteration: " << iter << ", Mean Loss (last " << acc_batch_size << " iterations): " << mean_loss << std::endl;
+            loss_value_array.clear(); // Reset the loss_value_array
+            iteration_wise_loss_array.push_back(mean_loss);
+        }
+        else
+        {
+            loss_value_array.push_back(loss_value);
+        }
+        
     }
-    // Save the loss values to a file
-    saveVectorToFile(loss_value_array, "loss_values.txt");
+    saveVectorToFile(iteration_wise_loss_array, "iteration_wise_loss_values.txt");
 
 
     // Free the allocated memory

@@ -64,7 +64,7 @@ float Sequential::backward(float *predicted, float *ground_truth, Loss *loss_lay
     loss_layer->setTarget(ground_truth);
     loss_ptr = loss_layer->forward(predicted);
     loss_value = loss_ptr[0];
-    cout << "Loss Value: " << loss_value << std::endl;
+
 
 
 
