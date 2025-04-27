@@ -1,14 +1,13 @@
-#include <iostream>
-#include <fstream>
-#include <stdexcept>
+#include "../../include/cnn_library/dataloader/dataloader.h"
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <cstdlib> // for rand, srand
+#include <ctime>   // for time
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
 #include <vector>
-#include <cstdlib>  // for rand, srand
-#include <ctime>    // for time
-#include <algorithm>
-#include "../../include/cnn_library/dataloader/dataloader.h"
-
 
 using namespace std;
 #define IMAGE_SIZE 784
@@ -23,7 +22,6 @@ using namespace std;
 //     std::uniform_int_distribution<> dis(start, end);
 //     return dis(gen);
 // }
-
 
 std::vector<int> get_random_indices(int total_images, int batch_size) {
     std::vector<int> indices;
@@ -41,32 +39,36 @@ std::vector<int> get_random_indices(int total_images, int batch_size) {
     return indices;
 }
 
-uint32_t readUInt32(std::ifstream& stream) {
+uint32_t readUInt32(std::ifstream &stream) {
     uint8_t bytes[4];
-    stream.read(reinterpret_cast<char*>(bytes), 4);
+    stream.read(reinterpret_cast<char *>(bytes), 4);
     return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
 }
 
 // Returns pointer to [numImages x IMAGE_SIZE] array of ints
-int* loadMNISTImages(const std::string& filename, int& numImages) {
+int *loadMNISTImages(const std::string &filename, int &numImages) {
     std::ifstream file(filename, std::ios::binary);
-    if (!file) throw std::runtime_error("Failed to open image file.");
+    if (!file)
+        throw std::runtime_error("Failed to open image file.");
 
     uint32_t magic = readUInt32(file);
-    if (magic != 2051) throw std::runtime_error("Invalid MNIST image file.");
+    if (magic != 2051)
+        throw std::runtime_error("Invalid MNIST image file.");
 
     numImages = readUInt32(file);
-    if (numImages > MAX_IMAGES) numImages = MAX_IMAGES;
+    if (numImages > MAX_IMAGES)
+        numImages = MAX_IMAGES;
 
     uint32_t rows = readUInt32(file);
     uint32_t cols = readUInt32(file);
 
-    uint8_t* buffer = static_cast<uint8_t*>(malloc(numImages * IMAGE_SIZE));
-    int* images = static_cast<int*>(malloc(sizeof(int) * numImages * IMAGE_SIZE));
+    uint8_t *buffer = static_cast<uint8_t *>(malloc(numImages * IMAGE_SIZE));
+    int *images = static_cast<int *>(malloc(sizeof(int) * numImages * IMAGE_SIZE));
 
-    if (!buffer || !images) throw std::runtime_error("Memory allocation failed.");
+    if (!buffer || !images)
+        throw std::runtime_error("Memory allocation failed.");
 
-    file.read(reinterpret_cast<char*>(buffer), numImages * IMAGE_SIZE);
+    file.read(reinterpret_cast<char *>(buffer), numImages * IMAGE_SIZE);
 
     for (int i = 0; i < numImages * IMAGE_SIZE; ++i) {
         images[i] = static_cast<int>(buffer[i]);
@@ -77,22 +79,26 @@ int* loadMNISTImages(const std::string& filename, int& numImages) {
 }
 
 // Returns pointer to int[numLabels]
-int* loadMNISTLabels(const std::string& filename, int& numLabels) {
+int *loadMNISTLabels(const std::string &filename, int &numLabels) {
     std::ifstream file(filename, std::ios::binary);
-    if (!file) throw std::runtime_error("Failed to open label file.");
+    if (!file)
+        throw std::runtime_error("Failed to open label file.");
 
     uint32_t magic = readUInt32(file);
-    if (magic != 2049) throw std::runtime_error("Invalid MNIST label file.");
+    if (magic != 2049)
+        throw std::runtime_error("Invalid MNIST label file.");
 
     numLabels = readUInt32(file);
-    if (numLabels > MAX_IMAGES) numLabels = MAX_IMAGES;
+    if (numLabels > MAX_IMAGES)
+        numLabels = MAX_IMAGES;
 
-    uint8_t* buffer = static_cast<uint8_t*>(malloc(numLabels));
-    int* labels = static_cast<int*>(malloc(sizeof(int) * numLabels));
+    uint8_t *buffer = static_cast<uint8_t *>(malloc(numLabels));
+    int *labels = static_cast<int *>(malloc(sizeof(int) * numLabels));
 
-    if (!buffer || !labels) throw std::runtime_error("Memory allocation failed.");
+    if (!buffer || !labels)
+        throw std::runtime_error("Memory allocation failed.");
 
-    file.read(reinterpret_cast<char*>(buffer), numLabels);
+    file.read(reinterpret_cast<char *>(buffer), numLabels);
 
     for (int i = 0; i < numLabels; ++i) {
         labels[i] = static_cast<int>(buffer[i]);
@@ -102,9 +108,7 @@ int* loadMNISTLabels(const std::string& filename, int& numLabels) {
     return labels;
 }
 
-
-DataLoader::DataLoader(std::string data_path, std::string label_path, int batch_size, int number_of_images)
-{
+DataLoader::DataLoader(std::string data_path, std::string label_path, int batch_size, int number_of_images) {
     this->numImages = number_of_images;
     this->batch_size = batch_size;
     this->data_path = data_path;
@@ -115,37 +119,33 @@ DataLoader::DataLoader(std::string data_path, std::string label_path, int batch_
     this->labels = loadMNISTLabels(label_path, numImages);
 }
 
-
-Batch DataLoader::load_batch(int idx)
-{
+Batch DataLoader::load_batch(int idx) {
     // Allocate memory for the batch
-    float* batch = static_cast<float*>(malloc(sizeof(float) * batch_size * IMAGE_SIZE));
-    float* labels_batch = static_cast<float*>(malloc(sizeof(float) * batch_size));
+    float *batch = static_cast<float *>(malloc(sizeof(float) * batch_size * IMAGE_SIZE));
+    float *labels_batch = static_cast<float *>(malloc(sizeof(float) * batch_size));
 
     // Error Handling
-    if (!labels_batch) throw std::runtime_error("Memory allocation failed for labels batch.");
-    if (!batch) throw std::runtime_error("Memory allocation failed for batch.");
-
+    if (!labels_batch)
+        throw std::runtime_error("Memory allocation failed for labels batch.");
+    if (!batch)
+        throw std::runtime_error("Memory allocation failed for batch.");
 
     // FOR MULTIPLE BATCH SIZE
-    // for (int i = 0; i < batch_size; ++i) 
-    // {
-    //     for (int j = 0; j < IMAGE_SIZE; ++j) 
-    //     {
-    //         batch[i * IMAGE_SIZE + j] = static_cast<float>(images[idx + (i * IMAGE_SIZE) + j]);
-    //     }
-    //     labels_batch[i] = static_cast<float>(labels[idx+i]);
-    // }
+    for (int i = 0; i < batch_size; ++i) {
+        for (int j = 0; j < IMAGE_SIZE; ++j) {
+            batch[i * IMAGE_SIZE + j] = static_cast<float>(images[(idx * batch_size + i) * IMAGE_SIZE + j]);
+        }
+        labels_batch[i] = static_cast<float>(labels[idx * batch_size + i]);
+    }
 
     // FOR SINGLE BATCH SIZE
-    for (int j = 0; j < IMAGE_SIZE; ++j) 
-    {
-        batch[j] = static_cast<float>(images[idx * IMAGE_SIZE + j]);
-    }
-    labels_batch[0] = static_cast<float>(labels[idx]);
+    // for (int j = 0; j < IMAGE_SIZE; ++j)
+    // {
+    //     batch[j] = static_cast<float>(images[idx * IMAGE_SIZE + j]);
+    // }
+    // labels_batch[0] = static_cast<float>(labels[idx]);
 
     return Batch{batch, labels_batch};
-
 }
 
 DataLoader::~DataLoader() {
@@ -153,17 +153,14 @@ DataLoader::~DataLoader() {
     free(labels);
 }
 
-
-
-
-
-
 // FOR TESTING THE DATALODER
 // int main() {
 //     try {
-//         string image_path = "/home/MORGRIDGE/akazi/HPC_Assignments/Final_Project/CNN_Implementation_on_CUDA/MNIST_Dataset/train-images-idx3-ubyte";
-//         string label_path = "/home/MORGRIDGE/akazi/HPC_Assignments/Final_Project/CNN_Implementation_on_CUDA/MNIST_Dataset/train-labels-idx1-ubyte";
-        
+//         string image_path =
+//         "/home/MORGRIDGE/akazi/HPC_Assignments/Final_Project/CNN_Implementation_on_CUDA/MNIST_Dataset/train-images-idx3-ubyte";
+//         string label_path =
+//         "/home/MORGRIDGE/akazi/HPC_Assignments/Final_Project/CNN_Implementation_on_CUDA/MNIST_Dataset/train-labels-idx1-ubyte";
+
 //         int batch_size = 50;
 //         int image_size = 28 * 28;
 //         DataLoader* dataloader = new DataLoader(image_path, label_path, batch_size, 1000);
@@ -172,7 +169,7 @@ DataLoader::~DataLoader() {
 //         float* image_batch = batch.images;
 //         float* labels = batch.labels;
 
-//         for (int k = 0; k < batch_size; ++k) 
+//         for (int k = 0; k < batch_size; ++k)
 //         {
 //             std::cout << "Label: " << labels[k] << "\n";
 //             for (int i = 0; i < 28; ++i) {
@@ -185,8 +182,8 @@ DataLoader::~DataLoader() {
 //         }
 
 //         free(image_batch);
-//     } 
-    
+//     }
+
 //         catch (const std::exception& e) {
 //         std::cerr << "Error: " << e.what() << std::endl;
 //         return 1;
@@ -194,4 +191,3 @@ DataLoader::~DataLoader() {
 
 //     return 0;
 // }
-
