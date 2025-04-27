@@ -1,34 +1,35 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include "cnn_library/layers/base_layer.h"
+#ifndef CROSS_ENTROPY_LOSS_H
+#define CROSS_ENTROPY_LOSS_H
+
+#include "base_layer.h"
 
 class Convolution : public Layer {
 
-private:
-    int input_channels;
-    int output_channels;
-    int kernel_size;
-    int stride;
-    int padding;
-    int input_width;
-    int input_height;       
-    int output_width;
-    int output_height;  
+  private:
+    unsigned int input_channels;
+    unsigned int output_channels;
+    unsigned int kernel_size;
+    // unsigned int stride;
+    unsigned int padding;
+    unsigned int input_height;
+    unsigned int output_height;
+    unsigned int input_width;
+    unsigned int output_width;
+    float *cached_input;
 
-public:
-
+  public:
     // Constructor
-    Convolution(int input_channels, int output_channels, int kernel_size, int stride, int padding = 0);
-    
+    Convolution(int batch_size, int input_channels, int height, int width, int output_channels, int kernel_size,
+                int padding = 0);
+
     // Destructor
     ~Convolution();
 
     // Forward pass override
-    void forward(const std::vector<float>& input, std::vector<float>& output) override;
+    float *forward(float *input) override;
 
     // Backward pass override
-    void backward(const std::vector<float>& grad_output, std::vector<float>& grad_input) override;
+    float *backward(float *grad_input) override;
 
     // Set the device ID for the layer
     void setDevice(int device) override;
@@ -46,4 +47,12 @@ public:
     void initializeWeights() override;
     void initializeBiases() override;
 
+  private:
+    float *forward_CPU(float *input, float *kernel);
+    float *forward_GPU(float *input, float *kernel);
+
+    float *backward_CPU(float *grad_input);
+    float *backward_GPU(float *grad_input);
 };
+
+#endif
