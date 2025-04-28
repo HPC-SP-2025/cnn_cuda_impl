@@ -56,13 +56,6 @@ float *ReLU::forward(float *input) {
         forwardKernelReLU<<<blocks, threads_per_block>>>(input, this->device_forward_buffer, output_size, batch_size);
         cudaDeviceSynchronize();
 
-        float *temp_buffer = (float *)malloc(sizeof(float) * output_size * batch_size);
-        cudaMemcpy(temp_buffer, this->device_forward_buffer, sizeof(float) * output_size * batch_size,
-                   cudaMemcpyDeviceToHost);
-        for (size_t i = 0; i < output_size * batch_size; i++) {
-        }
-        free(temp_buffer);
-
         // // For testing ReLU forward
         // cudaMemcpy(this->host_forward_buffer, this->device_forward_buffer, sizeof(float)*output_size*batch_size,
         // cudaMemcpyDeviceToHost); return this->host_forward_buffer; To pass onto next layer
@@ -109,6 +102,8 @@ void ReLU::setDevice(int device) {
 
 // CPU forward implementation
 void ReLU::forwardCpuReLU(float *input, float *output) {
+
+#pragma omp parallel for
     for (size_t i = 0; i < output_size * batch_size; i++) {
         output[i] = fmaxf(input[i], 0.0f);
     }
@@ -116,6 +111,8 @@ void ReLU::forwardCpuReLU(float *input, float *output) {
 
 // CPU backward implementation
 void ReLU::backwardCpuReLU(float *grad_input, float *grad_output) {
+
+#pragma omp parallel for
     for (size_t i = 0; i < input_size * batch_size; i++) {
         grad_output[i] = (this->layer_input_ptr[i] > 0) ? grad_input[i] : 0.0f;
     }

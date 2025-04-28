@@ -7,6 +7,7 @@ using namespace std;
 
 // TODO: use reduction
 __global__ void forward_cel_kernel(const float *pred, float *target, float *loss, int n, int num_classes) {
+    extern __shared__ float shared_loss[];
 
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     int tid = threadIdx.x;
@@ -16,7 +17,6 @@ __global__ void forward_cel_kernel(const float *pred, float *target, float *loss
         loss_i = -log(max(pred[idx * num_classes + (int)target[idx]], EPSILON));
         // atomicAdd(loss, -loss_i);
     }
-    extern __shared__ float shared_loss[];
     shared_loss[tid] = loss_i;
 
     __syncthreads();
@@ -39,6 +39,8 @@ float Cross_Entropy_Loss::forward_CPU(const float *pred, float *target) {
     int num_classes = input_size;
 
     float loss = 0.0;
+
+#pragma omp parallel for reduction(- : loss)
     for (auto i = 0; i < n; i++) {
         loss -= log(max(pred[i * num_classes + (int)target[i]], EPSILON));
     }
@@ -56,7 +58,7 @@ float Cross_Entropy_Loss::forward_GPU(const float *pred, float *target) {
     return loss;
 }
 
-__global__ void backward_cel_kernel(float *grad_output, float *pred, float *target, int n, int num_classes) {
+__global__ void backward_cel_kernel(float *grad_output, float *pred, float *target, int n, int num_classes, int total) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     if (idx < n) {
         for (auto j = 0; j < num_classes; j++)
@@ -64,12 +66,29 @@ __global__ void backward_cel_kernel(float *grad_output, float *pred, float *targ
 
         grad_output[idx * num_classes + (int)target[idx]] -= 1.0 / n;
     }
+
+    // int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    // if (idx < total) {
+    //     int sample_idx = idx / num_classes;
+    //     int class_idx = idx % num_classes;
+
+    //     float grad = pred[idx] / n;
+    //     int target_class = static_cast<int>(target[sample_idx]);
+
+    //     if (class_idx == target_class) {
+    //         grad -= 1.0f / n;
+    //     }
+    //     grad_output[idx] = grad;
+    // }
 }
 
 void Cross_Entropy_Loss::backward_CPU(float *grad_output, float *pred, float *target) {
 
     int n = batch_size;
     int num_classes = input_size;
+
+#pragma omp parallel for
     for (auto i = 0; i < n; i++) {
         for (auto j = 0; j < num_classes; j++)
             grad_output[i * num_classes + j] = pred[i * num_classes + j] / n;
@@ -100,10 +119,9 @@ float *Cross_Entropy_Loss::forward(float *pred) {
 
     float loss;
     if (this->device) {
-        
+
         loss = forward_GPU(pred, this->target);
-    } 
-    else {
+    } else {
         loss = forward_CPU(pred, this->target);
     }
     host_forward_buffer[0] = loss;
@@ -112,9 +130,10 @@ float *Cross_Entropy_Loss::forward(float *pred) {
 
 float *Cross_Entropy_Loss::backward(float *pred) {
     if (this->device) {
+        int total_elems = batch_size * input_size;
         int num_blocks = (batch_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
         backward_cel_kernel<<<num_blocks, BLOCK_SIZE>>>(device_backward_buffer, pred, this->target, batch_size,
-                                                        input_size);
+                                                        input_size, total_elems);
         return device_backward_buffer;
     } else {
         backward_CPU(host_backward_buffer, pred, this->target);

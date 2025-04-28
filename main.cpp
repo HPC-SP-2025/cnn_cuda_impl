@@ -2,10 +2,14 @@
 #include "include/cnn_library/layers/cross_entropy_loss.h"
 #include "include/cnn_library/layers/loss.h"
 #include "model.h"
+#include <chrono>
+#include <cuda_runtime.h>
 #include <fstream>
 #include <iostream>
 #include <vector>
 using namespace std;
+using std::chrono::duration;
+using std::chrono::high_resolution_clock;
 
 float *createAndReturnRandomArray(unsigned int size, float value) {
     const float constantValue = value; // Constant value to fill the array
@@ -32,16 +36,35 @@ void saveVectorToFile(const std::vector<float> &vec, const std::string &filename
     std::cout << "Vector saved to " << filename << std::endl;
 }
 
-int main() {
+int main(int argc, char const *argv[]) {
+
+    // high_resolution_clock::time_point start;
+    // high_resolution_clock::time_point end;
+    // duration<double, std::milli> duration_sec;
 
     // HYPERPARAMETERS
-    unsigned int batch_size = 8;
+    unsigned int batch_size = atoi(argv[1]);
+    float lr = atof(argv[2]);
+    int total_iterations = atoi(argv[3]);
+    int device = atoi(argv[4]); // 0 for CPU, 1 for GPU
     unsigned int acc_batch_size = 128;
-    float lr = 0.0001;
-    int total_iterations = 50000;
-    int device = 1; // 0 for CPU, 1 for GPU
     unsigned int input_size = 784;
     unsigned int num_classes = 10;
+
+    printf("batch size: %d, lr: %f, iters: %d, device:%d\n", batch_size, lr, total_iterations, device);
+
+    if (device == 0) {
+        omp_set_num_threads(8);
+#pragma omp parallel
+        {
+            int thread_id = omp_get_thread_num();
+            int num_threads = omp_get_num_threads();
+#pragma omp critical
+            { std::cout << "Inside parallel region: thread " << thread_id << " out of " << num_threads << std::endl; }
+        }
+    }
+
+    exit(0);
 
     string DATA_DIR = "../MNIST_Dataset/train-images-idx3-ubyte";
     string LABEL_DIR = "../MNIST_Dataset/train-labels-idx1-ubyte";
@@ -76,6 +99,8 @@ int main() {
     float *label_vector;
     std::vector<float> loss_value_array;
     std::vector<float> iteration_wise_loss_array;
+
+    printf("batch size: %d, lr: %f, iters: %d, device:%d\n", batch_size, lr, total_iterations, device);
 
     if (device) {
         cudaMalloc((void **)&d_input_data, input_size * batch_size * sizeof(float));

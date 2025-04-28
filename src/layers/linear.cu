@@ -2,74 +2,73 @@
 #include <cstring>
 #include <iostream>
 
-
 __global__ void forward_kernel(float *input, float *weights, float *biases, float *output, size_t input_size,
-    size_t output_size, size_t batch_size) {
-int row = blockIdx.y * blockDim.y + threadIdx.y; // batch index
-int col = blockIdx.x * blockDim.x + threadIdx.x; // output index
+                               size_t output_size, size_t batch_size) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y; // batch index
+    int col = blockIdx.x * blockDim.x + threadIdx.x; // output index
 
-if (row < batch_size && col < output_size) {
-float val = biases[col];
-for (int i = 0; i < input_size; ++i) {
-val += input[row * input_size + i] * weights[i * output_size + col];
-}
-output[row * output_size + col] = val;
-}
+    if (row < batch_size && col < output_size) {
+        float val = biases[col];
+        for (int i = 0; i < input_size; ++i) {
+            val += input[row * input_size + i] * weights[i * output_size + col];
+        }
+        output[row * output_size + col] = val;
+    }
 }
 
 __global__ void backward_input_kernel(float *grad_output, float *weights, float *grad_input, size_t input_size,
-           size_t output_size, size_t batch_size) {
-int row = blockIdx.y * blockDim.y + threadIdx.y; // batch index
-int col = blockIdx.x * blockDim.x + threadIdx.x; // input index
+                                      size_t output_size, size_t batch_size) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y; // batch index
+    int col = blockIdx.x * blockDim.x + threadIdx.x; // input index
 
-if (row < batch_size && col < input_size) {
-float val = 0.0f;
-for (int j = 0; j < output_size; ++j) {
-val += grad_output[row * output_size + j] * weights[col * output_size + j];
-}
-grad_input[row * input_size + col] = val;
-}
+    if (row < batch_size && col < input_size) {
+        float val = 0.0f;
+        for (int j = 0; j < output_size; ++j) {
+            val += grad_output[row * output_size + j] * weights[col * output_size + j];
+        }
+        grad_input[row * input_size + col] = val;
+    }
 }
 
 __global__ void backward_weight_kernel(float *input, float *grad_output, float *grad_weights, size_t input_size,
-            size_t output_size, size_t batch_size) {
-int i = blockIdx.y * blockDim.y + threadIdx.y; // input index
-int o = blockIdx.x * blockDim.x + threadIdx.x; // output index
+                                       size_t output_size, size_t batch_size) {
+    int i = blockIdx.y * blockDim.y + threadIdx.y; // input index
+    int o = blockIdx.x * blockDim.x + threadIdx.x; // output index
 
-if (i < input_size && o < output_size) {
-float val = 0.0f;
-for (int b = 0; b < batch_size; ++b) {
-val += input[b * input_size + i] * grad_output[b * output_size + o];
-}
-atomicAdd(&grad_weights[i * output_size + o], val);
-}
+    if (i < input_size && o < output_size) {
+        float val = 0.0f;
+        for (int b = 0; b < batch_size; ++b) {
+            val += input[b * input_size + i] * grad_output[b * output_size + o];
+        }
+        atomicAdd(&grad_weights[i * output_size + o], val);
+    }
 }
 
 __global__ void backward_bias_kernel(float *grad_output, float *grad_biases, size_t output_size, size_t batch_size) {
-int o = blockIdx.x * blockDim.x + threadIdx.x;
-if (o < output_size) {
-float val = 0.0f;
-for (int b = 0; b < batch_size; ++b) {
-val += grad_output[b * output_size + o];
-}
-atomicAdd(&grad_biases[o], val);
-}
+    int o = blockIdx.x * blockDim.x + threadIdx.x;
+    if (o < output_size) {
+        float val = 0.0f;
+        for (int b = 0; b < batch_size; ++b) {
+            val += grad_output[b * output_size + o];
+        }
+        atomicAdd(&grad_biases[o], val);
+    }
 }
 __global__ void update_parameters_kernel(float *weights, float *grad_weights, float *biases, float *grad_biases,
-              float learning_rate, size_t weight_size, size_t bias_size) {
-int idx = blockIdx.x * blockDim.x + threadIdx.x;
+                                         float learning_rate, size_t weight_size, size_t bias_size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-// Update weights
-if (idx < weight_size) {
-weights[idx] -= learning_rate * grad_weights[idx];
-grad_weights[idx] = 0.0f;
-}
+    // Update weights
+    if (idx < weight_size) {
+        weights[idx] -= learning_rate * grad_weights[idx];
+        grad_weights[idx] = 0.0f;
+    }
 
-// Update biases
-if (idx < bias_size) {
-biases[idx] -= learning_rate * grad_biases[idx];
-grad_biases[idx] = 0.0f;
-}
+    // Update biases
+    if (idx < bias_size) {
+        biases[idx] -= learning_rate * grad_biases[idx];
+        grad_biases[idx] = 0.0f;
+    }
 }
 
 // Constructor
@@ -153,6 +152,7 @@ float *Linear::forward(float *input) {
 float *Linear::forwardCPU(float *input) {
     // Initialize output with biases
     float *output = host_forward_buffer;
+#pragma omp parallel for collapse(2)
     for (size_t b = 0; b < batch_size; b++) {
         for (size_t o = 0; o < output_size; o++) {
             output[b * output_size + o] = host_biases[o];
@@ -160,9 +160,10 @@ float *Linear::forwardCPU(float *input) {
     }
 
     // Matrix multiplication: output += input * weights
+#pragma omp parallel for collapse(2)
     for (size_t b = 0; b < batch_size; b++) {
-        for (size_t i = 0; i < input_size; i++) {
-            for (size_t o = 0; o < output_size; o++) {
+        for (size_t o = 0; o < output_size; o++) {
+            for (size_t i = 0; i < input_size; i++) {
                 output[b * output_size + o] += input[b * input_size + i] * host_weights[i * output_size + o];
             }
         }
@@ -187,7 +188,8 @@ float *Linear::backwardCPU(float *grad_input) {
     // Initialize grad_output with zeros
     std::memset(host_backward_buffer, 0, input_size * batch_size * sizeof(float));
 
-    // Compute di
+// Compute di
+#pragma omp parallel for collapse(2)
     for (size_t b = 0; b < batch_size; b++) {
         for (size_t i = 0; i < input_size; i++) {
             for (size_t o = 0; o < output_size; o++) {
@@ -197,19 +199,37 @@ float *Linear::backwardCPU(float *grad_input) {
         }
     }
 
-    // Compute dw
-    for (size_t b = 0; b < batch_size; b++) {
-        for (size_t i = 0; i < input_size; i++) {
-            for (size_t o = 0; o < output_size; o++) {
+    // // Compute dw
+    // for (size_t b = 0; b < batch_size; b++) {
+    //     for (size_t i = 0; i < input_size; i++) {
+    //         for (size_t o = 0; o < output_size; o++) {
+    //             host_grad_weights[i * output_size + o] +=
+    //                 cached_input[b * input_size + i] * grad_input[b * output_size + o];
+    //         }
+    //     }
+    // }
+
+    // // Compute db
+    // for (size_t b = 0; b < batch_size; b++) {
+    //     for (size_t o = 0; o < output_size; o++) {
+    //         host_grad_biases[o] += grad_input[b * output_size + o];
+    //     }
+    // }
+
+#pragma omp parallel for collapse(2) reduction(+ : host_grad_weights[ : input_size * output_size])
+    for (size_t i = 0; i < input_size; i++) {
+        for (size_t o = 0; o < output_size; o++) {
+            for (size_t b = 0; b < batch_size; b++) {
                 host_grad_weights[i * output_size + o] +=
                     cached_input[b * input_size + i] * grad_input[b * output_size + o];
             }
         }
     }
 
-    // Compute db
-    for (size_t b = 0; b < batch_size; b++) {
-        for (size_t o = 0; o < output_size; o++) {
+// Compute db
+#pragma omp parallel for reduction(+ : host_grad_biases[ : output_size])
+    for (size_t o = 0; o < output_size; o++) {
+        for (size_t b = 0; b < batch_size; b++) {
             host_grad_biases[o] += grad_input[b * output_size + o];
         }
     }
@@ -289,8 +309,8 @@ void Linear::initializeWeights() {
 }
 
 // Initialize biases to zero
-void Linear::initializeBiases() { 
-    // std::memset(host_biases, 2.0, output_size * sizeof(float)); 
+void Linear::initializeBiases() {
+    // std::memset(host_biases, 2.0, output_size * sizeof(float));
     std::fill(host_biases, host_biases + output_size, 0.0f);
 }
 
@@ -298,8 +318,7 @@ void Linear::setParameters(const std::vector<float> &parameters) {
     size_t weights_size = input_size * output_size;
     size_t biases_size = output_size;
 
-    if (parameters.size() != weights_size + biases_size) 
-    {
+    if (parameters.size() != weights_size + biases_size) {
         std::cerr << "Error: Parameters size mismatch!" << std::endl;
         return;
     }
@@ -309,8 +328,6 @@ void Linear::setParameters(const std::vector<float> &parameters) {
 
     // Set biases
     std::memcpy(host_biases, parameters.data() + weights_size, biases_size * sizeof(float));
-
-    
 }
 
 // Get input size
@@ -401,5 +418,3 @@ float *Linear::backwardGPU(float *grad_input) {
 
     return device_backward_buffer;
 }
-
-

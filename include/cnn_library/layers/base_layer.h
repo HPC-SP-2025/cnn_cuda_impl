@@ -3,6 +3,7 @@
 
 // Include the headers
 #include <memory>
+#include <omp.h>
 #include <string>
 #include <vector>
 
@@ -105,7 +106,7 @@ class Layer {
 
     // SET WEIGHTS
     /* This function will set the weights of the layer from a loaded file */
-    virtual void setParameters(const vector<float>& parameters) = 0;
+    virtual void setParameters(const vector<float> &parameters) = 0;
 
     // -------------------------------------------------------------------
     // OPTIONAL FUNCTIONS
