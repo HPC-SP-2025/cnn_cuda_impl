@@ -25,7 +25,7 @@ class Cross_Entropy_Loss : public Loss {
   private:
     float forward_CPU(const float *pred, float *target);
     void backward_CPU(float *grad_output, float *pred, float *target);
-    float forward_GPU(const float *pred, float *target);
+    // float forward_GPU(const float *pred, float *target);
 
   protected:
     float *target;

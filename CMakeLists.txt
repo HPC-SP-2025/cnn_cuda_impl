@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.18)
-project(MyCudaProject LANGUAGES CXX CUDA)
+project(MyCudaProject LANGUAGES CXX)
 
-set(CMAKE_CUDA_ARCHITECTURES 86)
+# set(CMAKE_CUDA_ARCHITECTURES 86)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
   # or 61, 75, 86 etc. depending on your GPU
 
 # Enable device flags
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xptxas -O3")
+# set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xptxas -O3")
 
 # Set compiler optimization and warnings for host code
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
@@ -24,11 +24,11 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 file(GLOB SRC_FILES 
-  ${CMAKE_SOURCE_DIR}/src/layers/relu.cu
+  ${CMAKE_SOURCE_DIR}/src/layers/relu.cpp
   ${CMAKE_SOURCE_DIR}/src/nn/sequential.cpp
-  ${CMAKE_SOURCE_DIR}/src/layers/softmax.cu
-  ${CMAKE_SOURCE_DIR}/src/layers/cross_entropy_loss.cu
-  ${CMAKE_SOURCE_DIR}/src/layers/linear.cu
+  ${CMAKE_SOURCE_DIR}/src/layers/softmax.cpp
+  ${CMAKE_SOURCE_DIR}/src/layers/cross_entropy_loss.cpp
+  ${CMAKE_SOURCE_DIR}/src/layers/linear.cpp
   ${CMAKE_SOURCE_DIR}/src/dataloader/dataloader.cpp
 )
 list(APPEND SOURCES ${SRC_FILES})
@@ -42,9 +42,9 @@ endforeach()
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    CUDA_ARCHITECTURES 75
-    CUDA_SEPARABLE_COMPILATION ON
-)
+# set_target_properties(${PROJECT_NAME} PROPERTIES
+#     CUDA_ARCHITECTURES 75
+#     CUDA_SEPARABLE_COMPILATION ON
+# )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)

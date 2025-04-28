@@ -1,31 +1,31 @@
 #ifndef SOFTMAX_H
 #define SOFTMAX_H
 
-#include <iostream>
-#include <vector>
-#include <string>
 #include "base_layer.h"
+#include <iostream>
+#include <string>
+#include <vector>
 
 class Softmax : public Layer {
 
-protected:
+  protected:
     string layer_name; // Name of the layer
-    int device = 0; // 0 for CPU, 1 for GPU
+    int device = 0;    // 0 for CPU, 1 for GPU
     size_t input_size;
     size_t output_size;
     size_t batch_size;
 
     // Forward Buffer
-    float* host_forward_buffer;
-    float* device_forward_buffer;
+    float *host_forward_buffer;
+    float *device_forward_buffer;
 
     // Backward Buffer
-    float* host_backward_buffer;
-    float* device_backward_buffer;
+    float *host_backward_buffer;
+    float *device_backward_buffer;
 
     int test_mode;
 
-public:
+  public:
     // Constructor
     Softmax(size_t num_classes, size_t batch_size);
 
@@ -33,10 +33,10 @@ public:
     ~Softmax();
 
     // Forward pass override
-    float* forward(float* input) override;
+    float *forward(float *input) override;
 
     // Backward pass override
-    float* backward(float* grad_input) override;
+    float *backward(float *grad_input) override;
 
     // Get input size
     size_t getInputSize() override;
@@ -62,13 +62,10 @@ public:
     // To set test mode
     void setTestMode(int device);
 
-private:
-
+  private:
     // CPU IMPLEMENTATION
-    void forwardCpuSoftmax(float* input, float* output);
-    void backwardCpuSoftmax(float* grad_input, float* grad_output);
-    void forwardGpuSoftmax(float* input, float* output);
-    void backwardGpuSoftmax(float* grad_input, float* grad_output);
+    void forwardCpuSoftmax(float *input, float *output);
+    void backwardCpuSoftmax(float *grad_input, float *grad_output);
 };
 
 // CUDA KERNEL IMPLEMENTATION

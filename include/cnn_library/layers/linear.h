@@ -71,17 +71,16 @@ class Linear : public Layer {
     float *forwardCPU(float *input);
     // CPU Backward Pass
     float *backwardCPU(float *grad_input);
-    // GPU Forward Pass
-    float *forwardGPU(float *input);
-    // GPU Backward Pass
-    float *backwardGPU(float *grad_input);
 };
 
-// __global__ void forward_kernel(float *input, float *weights, float *biases, float *output, size_t input_size, size_t output_size, size_t batch_size);
+// __global__ void forward_kernel(float *input, float *weights, float *biases, float *output, size_t input_size, size_t
+// output_size, size_t batch_size);
 
-// __global__ void backward_input_kernel(float *grad_output, float *weights, float *grad_input, size_t input_size, size_t output_size, size_t batch_size);
+// __global__ void backward_input_kernel(float *grad_output, float *weights, float *grad_input, size_t input_size,
+// size_t output_size, size_t batch_size);
 
-// __global__ void backward_weight_kernel(float *input, float *grad_output, float *grad_weights, size_t input_size, size_t output_size, size_t batch_size);
+// __global__ void backward_weight_kernel(float *input, float *grad_output, float *grad_weights, size_t input_size,
+// size_t output_size, size_t batch_size);
 
 // __global__ void backward_bias_kernel(float *grad_output, float *grad_biases, size_t output_size, size_t batch_size);
 

@@ -3,7 +3,6 @@
 #include "include/cnn_library/layers/loss.h"
 #include "model.h"
 #include <chrono>
-#include <cuda_runtime.h>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -38,33 +37,28 @@ void saveVectorToFile(const std::vector<float> &vec, const std::string &filename
 
 int main(int argc, char const *argv[]) {
 
-    // high_resolution_clock::time_point start;
-    // high_resolution_clock::time_point end;
-    // duration<double, std::milli> duration_sec;
+    high_resolution_clock::time_point start;
+    high_resolution_clock::time_point end;
+    duration<double, std::milli> duration_sec;
 
     // HYPERPARAMETERS
     unsigned int batch_size = atoi(argv[1]);
     float lr = atof(argv[2]);
     int total_iterations = atoi(argv[3]);
     int device = atoi(argv[4]); // 0 for CPU, 1 for GPU
-    unsigned int acc_batch_size = 128;
+    unsigned int acc_batch_size = 10;
     unsigned int input_size = 784;
     unsigned int num_classes = 10;
 
-    printf("batch size: %d, lr: %f, iters: %d, device:%d\n", batch_size, lr, total_iterations, device);
+    printf("batch size: %d, lr: %f, iters: %d, device: %d\n", batch_size, lr, total_iterations, device);
 
     if (device == 0) {
-        omp_set_num_threads(8);
+        int num_threads = atoi(argv[5]);
+        omp_set_num_threads(num_threads);
 #pragma omp parallel
-        {
-            int thread_id = omp_get_thread_num();
-            int num_threads = omp_get_num_threads();
-#pragma omp critical
-            { std::cout << "Inside parallel region: thread " << thread_id << " out of " << num_threads << std::endl; }
-        }
+#pragma omp single
+        { printf("Num threads: %d\n", omp_get_num_threads()); }
     }
-
-    exit(0);
 
     string DATA_DIR = "../MNIST_Dataset/train-images-idx3-ubyte";
     string LABEL_DIR = "../MNIST_Dataset/train-labels-idx1-ubyte";
@@ -93,8 +87,6 @@ int main(int argc, char const *argv[]) {
     // Create a random array for input data and labels ( Will be replaced with dataloader)
     float *h_input_data = new float[batch_size * input_size];
     float *h_label_vector = new float[batch_size];
-    float *d_input_data;
-    float *d_label_data;
     float *input_data;
     float *label_vector;
     std::vector<float> loss_value_array;
@@ -102,31 +94,22 @@ int main(int argc, char const *argv[]) {
 
     printf("batch size: %d, lr: %f, iters: %d, device:%d\n", batch_size, lr, total_iterations, device);
 
-    if (device) {
-        cudaMalloc((void **)&d_input_data, input_size * batch_size * sizeof(float));
-        cudaMalloc((void **)&d_label_data, 1 * batch_size * sizeof(float));
-    }
-
     int max_idx = 60000 / batch_size;
+
+    start = high_resolution_clock::now();
 
     // Iterate over the the data
     for (int iter = 0; iter < total_iterations; iter++) {
 
         // Fill the input data and labels with random values
         Batch batch_data = dataloader->load_batch(iter % max_idx);
-        h_input_data = batch_data.images;
-        h_label_vector = batch_data.labels;
+        input_data = batch_data.images;
+        label_vector = batch_data.labels;
 
-        if (device == 0) {
-            input_data = h_input_data;
-            label_vector = h_label_vector;
-        } else {
-            cudaMemcpy(d_input_data, h_input_data, input_size * batch_size * sizeof(float), cudaMemcpyHostToDevice);
-            cudaMemcpy(d_label_data, h_label_vector, 1 * batch_size * sizeof(float), cudaMemcpyHostToDevice);
-
-            input_data = d_input_data;
-            label_vector = d_label_data;
-        }
+        // if (device == 0) {
+        //     input_data = h_input_data;
+        //     label_vector = h_label_vector;
+        // }
 
         // Forwardfeed the model
         float *prediction = net->forward(input_data);
@@ -152,13 +135,16 @@ int main(int argc, char const *argv[]) {
             loss_value_array.push_back(loss_value);
         }
     }
+
+    end = high_resolution_clock::now();
+    duration_sec = chrono::duration_cast<duration<double, std::milli>>(end - start);
+    printf("Total time: %fms, Per iter time: %fms\n", duration_sec.count(), duration_sec.count() / total_iterations);
+
     saveVectorToFile(iteration_wise_loss_array, "iteration_wise_loss_values.txt");
 
     // Free the allocated memory
     delete[] h_input_data;
     delete[] h_label_vector;
-    cudaFree(d_input_data);
-    cudaFree(d_label_data);
     delete net;
     delete loss_layer;
     return 0;
