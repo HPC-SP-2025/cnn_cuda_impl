@@ -1,1 +1,34 @@
 \section{ReLU}
+
+The ReLU (Rectified Linear Unit) layer implements a non-linear activation function widely used in deep neural networks to introduce non-linearity and improve model capacity. It is defined element-wise as:
+$$ReLU(x) = max(0,x)$$
+This layer supports both CPU and GPU execution and is implemented with forward and backward passes for training and inference.
+
+\subsection{Forward Pass}
+CPU: Uses a simple loop to apply fmaxf(input[i], 0.0f) across the input array.
+
+GPU: A CUDA kernel (forwardKernelReLU) is launched with each thread computing the ReLU output for one element.
+
+The GPU output buffer (device_forward_buffer) is returned and optionally copied back to host for debugging or testing.
+
+\subsection{Backward Pass}
+Purpose: Computes the gradient of the loss with respect to the input of the ReLU layer.
+
+CPU: Applies grad_output[i] = grad_input[i] if input[i] > 0, else 0.
+
+GPU: A CUDA kernel (backwardKernelReLU) executes the same logic in parallel.
+
+\subsection{Device Management}
+The setDevice() method enables GPU acceleration and allocates memory on the device.
+
+Data is copied between host and device as needed during setup and execution.
+
+\subsection{Miscellaneous}
+getInputSize(), getOutputSize(), and numParams() provide layer metadata.
+
+getLayerName() returns the string "ReLU" for identification.
+
+The layer has no trainable parameters, hence numParams() returns 0.
+
+\subsection{Debugging Support}
+Host buffers can be optionally used to inspect GPU output via cudaMemcpy, although this is commented out in the current code for performance.
