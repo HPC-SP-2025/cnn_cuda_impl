@@ -6,7 +6,7 @@ $$ReLU(x) = max(0,x)$$
 \textbf{Forward Pass}\\
 The CPU implementation uses a simple loop to apply floating max across the input array, while the GPU implementation launches a CUDA kernel, where each thread computes the ReLU output for one element. The GPU output buffer (device forward buffer) is passed as input to the next layer.
 
-\textbf{Backward Pass}
+\textbf{Backward Pass}\\
 The gradient of ReLU is either 1, if input is > 0, or 0. Rather than multiplying the gradient with the incoming gradient we just pass the gradient as it. That is,\\ \verb|op_grad[idx] = (input[idx] > 0) ? ip_grad[idx] : 0.0f;|\\ On the GPU, a CUDA kernel executes the same logic in parallel.
 
 \textbf{Parameter Updates}\\
