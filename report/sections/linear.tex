@@ -1,1 +1,35 @@
 \section{Linear}
+
+The Linear layer, also known as a fully connected (FC) layer, performs an affine transformation on input data, mapping it from an input space of dimension $D_{in}$ to an output space of dimension $D_{out}$. This transformation is defined as:
+$$output = input × weights + biases$$
+
+\textbf{Forward Pass}\\
+In the forward pass, for each sample in the batch, the dot product of the input vector and the weights matrix is computed, followed by the addition of the bias vector. The code supports both CPU and GPU execution. On the CPU, this operation is performed using nested loops. On the GPU, a custom CUDA kernel (forward kernel) parallelizes the computation across output neurons and batch elements.
+
+\textbf{Backward Pass}\\
+The backward pass involves calculating three gradients:
+\begin{itemize}
+    \item Gradient w.r.t. input: Computed using backward input kernel, by multiplying grad output with the transposed weight matrix.
+    \item Gradient w.r.t. weights: Computed using backward weight kernel, by accumulating outer products of input and grad output.
+    \item Gradient w.r.t. biases: Computed using backward bias kernel, by summing over grad output along the batch dimension.
+\end{itemize}
+
+CPU equivalents of these computations are also implemented using nested loops and stored in dedicated buffers.
+
+\textbf{Parameter Updates}\\
+After the backward pass, gradients are used to update the layer's parameters (weights and biases). On the CPU, this is done using standard gradient descent with in-place subtraction. On the GPU, the update parameters kernel kernel applies the update and resets the gradients to zero using atomic operations where needed to avoid race conditions.
+
+\textbf{Memory Management}\\
+The layer dynamically allocates memory for weights, biases, and intermediate buffers on both host and device. Device memory is allocated only when the layer is switched to GPU mode via the setDevice() function, which also transfers parameters to the device and initializes gradients.
+
+\textbf{Design Considerations}\\
+The implementation cleanly separates host and device logic.
+
+The use of atomicAdd in weight and bias gradient computation ensures correctness when multiple threads write to the same memory location.
+
+Input caching (cached input) is used for efficient gradient computation during backpropagation.
+
+\textbf{Limitations and TODOs}\\
+The GPU forward and backward functions (forwardGPU and backwardGPU) are marked TODO, implying that GPU execution paths are only partially implemented.
+
+Memory deallocation on the GPU in the destructor is also pending.
