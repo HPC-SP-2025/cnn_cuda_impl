@@ -56,14 +56,27 @@ float Cross_Entropy_Loss::forward_GPU(const float *pred, float *target) {
     return loss;
 }
 
-__global__ void backward_cel_kernel(float *grad_output, float *pred, float *target, int n, int num_classes) {
+__global__ void backward_cel_kernel(float *grad_output, float *pred, float *target, int n, int num_classes,
+                                    int total_elems) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    if (idx < n) {
-        for (auto j = 0; j < num_classes; j++)
-            grad_output[idx * num_classes + j] = pred[idx * num_classes + j] / n;
 
-        grad_output[idx * num_classes + (int)target[idx]] -= 1.0 / n;
-    }
+    if (idx >= total_elems)
+        return;
+
+    int sample_idx = idx / num_classes;
+    int class_idx = idx % num_classes;
+
+    float grad = pred[idx] / n;
+    if (class_idx == (int)target[sample_idx])
+        grad -= 1.0f / n;
+
+    grad_output[idx] = grad;
+
+    // if (idx < n) {
+    //     for (auto j = 0; j < num_classes; j++)
+    //         grad_output[idx * num_classes + j] = pred[idx * num_classes + j] / n;
+    //     grad_output[idx * num_classes + (int)target[idx]] -= 1.0 / n;
+    // }
 }
 
 void Cross_Entropy_Loss::backward_CPU(float *grad_output, float *pred, float *target) {
@@ -100,10 +113,9 @@ float *Cross_Entropy_Loss::forward(float *pred) {
 
     float loss;
     if (this->device) {
-        
+
         loss = forward_GPU(pred, this->target);
-    } 
-    else {
+    } else {
         loss = forward_CPU(pred, this->target);
     }
     host_forward_buffer[0] = loss;
@@ -112,9 +124,9 @@ float *Cross_Entropy_Loss::forward(float *pred) {
 
 float *Cross_Entropy_Loss::backward(float *pred) {
     if (this->device) {
-        int num_blocks = (batch_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+        int num_blocks = (batch_size * input_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
         backward_cel_kernel<<<num_blocks, BLOCK_SIZE>>>(device_backward_buffer, pred, this->target, batch_size,
-                                                        input_size);
+                                                        input_size, batch_size * input_size);
         return device_backward_buffer;
     } else {
         backward_CPU(host_backward_buffer, pred, this->target);
