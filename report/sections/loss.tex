@@ -1,24 +1,28 @@
 \section{Loss}
 
-We train the neural network on the MNIST dataset, which consists of 10 class labels. Accordingly, we use the cross-entropy loss function during training. The loss is computed using the following expression:
-$$ L = -\sum_{i=0} ^ N y_i log(\hat{y}_i) $$
+We train the neural network on the MNIST dataset, which consists of 10 class labels. Accordingly, we use the cross-entropy loss function during training~\cite{bishop2006pattern, goodfellow2016deep}. The loss is computed using the following expression:
+\[
+    L = -\sum_{i=0}^N y_i \log(\hat{y}_i)
+\]
 
 \subsection{Forward Pass}
-In the forward pass, the loss is computed and returned. Here, $y_i$ is a one-hot encoded vector where the element corresponding to the true class is 1, and all other elements are 0. Therefore, the loss effectively reduces to the negative logarithm of the predicted probability for the true class.
+In the forward pass, the loss is computed and returned. Here, \( y_i \) is a one-hot encoded vector where the element corresponding to the true class is 1, and all other elements are 0. Therefore, the loss effectively reduces to the negative logarithm of the predicted probability for the true class~\cite{goodfellow2016deep}.
 
 \textbf{CPU Implementation:}  
-The naive CPU implementation uses a single for loop over the batch size. In the OpenMP implementation, we parallelize the computation using the "parallel for" directive along with the reduction clause to accumulate the total loss across threads.  
+The naive CPU implementation uses a single for loop over the batch size. In the OpenMP implementation, we parallelize the computation using the \texttt{parallel for} directive along with the reduction clause to accumulate the total loss across threads~\cite{stanford_xavier}.  
 
 \textbf{GPU Implementation:}  
-The CUDA kernel is designed such that each thread computes the logarithm of the predicted probability for the true class and loads it into shared memory. A parallel reduction is then used to sum these log values. The kernel is launched with a block size of 256, which provides best occupancy. The grid size is calculated as (batch size \% block size).
+The CUDA kernel is designed such that each thread computes the logarithm of the predicted probability for the true class and loads it into shared memory. A parallel reduction is then used to sum these log values~\cite{nvidia_cudnn, digitalocean_gpu_opt}. The kernel is launched with a block size of 256, which provides best occupancy. The grid size is calculated as \(\text{batch size} / \text{block size}\).
 
 \subsection{Backward Pass}
-The backward pass involves computing the gradients of the loss with respect to the predicted outputs $\hat{y}$. This is calculated as:
-$ \Delta L = \hat{y}_i - y_i$. 
+The backward pass involves computing the gradients of the loss with respect to the predicted outputs \( \hat{y} \). This is calculated as:
+\[
+    \nabla L = \hat{y}_i - y_i
+\]
+a well-known result for softmax cross-entropy gradients~\cite{goodfellow2016deep}.
 
 \textbf{CPU Implementation:}
-The naive CPU implementation uses nested for loops: the outer loop iterates over the batch size, and the inner loop iterates over the number of classes. In the OpenMP version, we use a simple for directive to parallelize the computation.
-
+The naive CPU implementation uses nested for loops: the outer loop iterates over the batch size, and the inner loop iterates over the number of classes. In the OpenMP version, we use a simple \texttt{parallel for} directive to parallelize the computation~\cite{neptune_gpu_optimization}.
 
 \textbf{GPU Implementation:}  
-Initially, the CUDA kernel was designed such that each thread processed an entire output vector using a loop. However, this implementation has strided memory access and potential bank conflicts. Since GPUs are optimized for sequential memory access, we revised the kernel so that each thread processes a single element of the output vector. This approach improves memory efficiency, as threads within a warp now access consecutive memory locations.
+Initially, the CUDA kernel was designed such that each thread processed an entire output vector using a loop. However, this implementation had strided memory access and potential bank conflicts~\cite{aws_gpu_performance}. Since GPUs are optimized for sequential memory access, we revised the kernel so that each thread processes a single element of the output vector. This approach improves memory efficiency, as threads within a warp now access consecutive memory locations~\cite{nvidia_cudnn, digitalocean_gpu_opt}.

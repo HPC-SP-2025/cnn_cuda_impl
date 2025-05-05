@@ -1,63 +1,64 @@
 \section{Softmax}
 
-The Softmax layer applies the Softmax function on a vector of K numbers, converting the vector into a probability distribution with K possible outcomes. This layer is typically introduced at the end of a classification network to convert the output of the network, represented as a vector of K classes, into a probability distribution over those K classes.
+The Softmax layer applies the Softmax function on a vector of \( K \) numbers, converting the vector into a probability distribution with \( K \) possible outcomes. This layer is typically introduced at the end of a classification network to convert the output of the network into a probability distribution over classes~\cite{bishop2006pattern, goodfellow2016deep}.
 
 \subsection{Forward Pass}
 
 The Softmax function is applied element-wise to the input vector. The computation is defined as:
-
 \[
-    y_i = softmax(x_{i}) = \frac{e^{x_{i} - x_{m}}}{\sum_{i=1}^K e^{x_{i} - x_{m}}}
+    y_i = \text{softmax}(x_i) = \frac{e^{x_i - x_m}}{\sum_{j=1}^K e^{x_j - x_m}}
 \]
-
 where:
 \begin{itemize}
-    \item \( x \in \mathbb{R}^{K} \): Input vector, where \( K \) is the number of classes.
-    \item \( x_{m} = \max_{i} x_{i} \)
-    \item \( y \in (0, 1)^K \): Output vector after applying softmax function element-wise.
+    \item \( x \in \mathbb{R}^K \): Input vector, where \( K \) is the number of classes.
+    \item \( x_m = \max_i x_i \): Maximum value in \( x \), used for numerical stability.
+    \item \( y \in (0, 1)^K \): Output probability vector.
 \end{itemize}
 
-\textbf{CPU Implementation:}
-On the CPU, this is implemented using a nested loop and another loop for normalization. In the nested loop, the outer loop goes over each element of the batch, where each element is a vector representation of the image at the end of the network, with length equal to the number of classes. We then apply the max\_element function from the Standard Template Library on the vector to find $x_m$.
-
-This is followed by inner loop, which goes over each element $x_i$ of the vector $x$. We first subtract $x_m$ from $x_i$, followed by passing the result to the exponent function. This output is temporarily stored in an equal-sized output vector. Additionally, this output is also accumulated in a sum variable.
-
-After the inner loop completes, we have another loop for normalization, which goes over each element in the output vector and divides it by the accumulated sum. Reducing each element by $x_m$ is done for the purpose of numerical stability, as the exponent function can otherwise grow very quickly. The maximum possible output of the exponent function across all elements after this subtraction would be $e^{x_m - x_m} = 1$.
-
-\textbf{GPU Implementation:}
-On the GPU, a custom CUDA kernel (referred to as the \textit{Softmax forward kernel}) performs this operation in parallel for each element in the batch. Each thread is assigned to compute the softmax for one batch element:
-
+\textbf{CPU Implementation:}  
+The CPU implementation uses nested loops:
 \begin{itemize}
-    \item Each thread reads an element of the batch, which would be a vector representation of the image as \( x \),
-    \item Computes the softmax of the vector similar to the CPU implementation, with the only difference being an extra initial loop that calculates $\max_i x_i$, since max\_element and other STL functions cannot be used in the kernel,
-    \item Writes the result to the corresponding position in the output vector \( y \).
+    \item An outer loop iterates over batch elements.
+    \item The inner loop computes \( x_m \), exponentiates \( x_i - x_m \), and accumulates the sum.
+    \item A normalization loop divides each exponentiated value by the sum.
 \end{itemize}
+Subtracting \( x_m \) ensures numerical stability by bounding the exponent values~\cite{goodfellow2016deep}.
 
-This design allows the Softmax function to be applied in parallel across the elements of a batch.
+\textbf{GPU Implementation:}  
+On the GPU, a custom CUDA kernel (the \textit{Softmax forward kernel}) parallelizes computation across batch elements~\cite{nvidia_cudnn}:
+\begin{itemize}
+    \item Each thread processes one batch element (a vector \( x \)).
+    \item The kernel computes \( x_m \), exponentiates \( x_i - x_m \), and normalizes.
+\end{itemize}
+This design leverages GPU parallelism while avoiding unstable exponentiation~\cite{digitalocean_gpu_opt}.
 
 \subsection{Backward Pass}
 
-The backward pass of the Softmax layer works in tandem with the loss layer. The gradient of the softmax combined with cross entropy loss simplifies to just the difference of the actual and the expected output vectors. This gradient calculation is handled at the loss layer, and the softmax layer simply passes this gradient backward. Let \( \nabla_y \) be the gradient flowing in from the loss layer:
-
+The backward pass of the Softmax layer works in tandem with the loss layer. When combined with cross-entropy loss, the gradient simplifies to:
 \[
-    \nabla_x = I(\nabla_y)
+    \nabla_x = \nabla_y
 \]
-
 where:
 \begin{itemize}
-    \item \( \nabla_y \in \mathbb{R}^{K} \): Upstream gradient from the loss layer.
-    \item \( I \): Identity function.
-    \item \( \nabla_x \in \mathbb{R}^{K} \): Gradient with respect to the input.
+    \item \( \nabla_y \in \mathbb{R}^K \): Upstream gradient from the loss layer.
+    \item \( \nabla_x \in \mathbb{R}^K \): Gradient with respect to the input.
 \end{itemize}
+This simplification is a well-known result in training classification networks~\cite{goodfellow2016deep}.
 
-\textbf{CPU Implementation:}
-The backward pass is computed by looping over each element of each vector in the batch and copying the element to the output.
+\textbf{CPU Implementation:}  
+The backward pass copies \( \nabla_y \) to \( \nabla_x \) using nested loops.
 
-\textbf{GPU Implementation:}
-A custom CUDA kernel (the \textit{Softmax backward kernel}) parallelizes this process by allocating one thread per element of the batch, where each thread copies over the element to the output gradient.
+\textbf{GPU Implementation:}  
+A custom CUDA kernel (the \textit{Softmax backward kernel}) assigns one thread per batch element to copy gradients~\cite{nvidia_cudnn}.
 
-\subsection{Memory Management}\\
-    The layer maintains memory for the input and output vectors for each batch, for both the forward and backward passes. Device memory is allocated when switching to GPU mode via the \texttt{setDevice()} function. No parameters (weights or biases) are stored for the Softmax layer, as it is parameter-free.
+\subsection{Memory Management}
 
-\subsection{Design Considerations}\\
-The softmax function is applied to vectors that are of dimension equal to the number of classes. In machine learning, classification tasks typically deal with tens to a few hundreds of classes. In our case, the number of classes was 10. The batch size on the other hand could climb up to $2^{13}$ in some cases. With this considered, our implementation of the softmax layer parallelizes the forward and backward passes across batch elements, and not across the individual vector elements in each batch.
+The layer maintains input/output buffers for forward and backward passes. Device memory is allocated via \texttt{setDevice()} when switching to GPU mode~\cite{aws_gpu_performance}. No parameters are stored, as Softmax is parameter-free.
+
+\subsection{Design Considerations}
+
+The implementation parallelizes across batch elements rather than individual vector elements, as:
+\begin{itemize}
+    \item Class counts are small (e.g., 10 for MNIST).
+    \item Batch sizes can reach \( 2^{13} \), benefiting from coarse-grained parallelism~\cite{neptune_gpu_optimization}.
+\end{itemize}

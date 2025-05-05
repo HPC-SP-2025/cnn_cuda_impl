@@ -1,15 +1,15 @@
 \section{Linear}
 
-The Linear layer, also known as a fully connected (FC) layer, performs an affine transformation on input data, mapping it from an input space of dimension $I$ to an output space of dimension $O$.
+The Linear layer, also known as a fully connected (FC) layer, performs an affine transformation on input data, mapping it from an input space of dimension $I$ to an output space of dimension $O$~\cite{goodfellow2016deep}.
+
+The affine transformation and implementation details for fully connected layers are standard in deep learning literature~\cite{goodfellow2016deep, bishop2006pattern}.
 
 \subsection{Forward Pass}
 
 In the forward pass of a fully connected (dense) layer, each output vector is computed by applying a linear transformation to the input vector, followed by the addition of a bias. The computation is defined as:
-
 \[
     Y = XW + b
 \]
-
 where:
 \begin{itemize}
     \item \( X \in \mathbb{R}^{B \times I} \): Input matrix, where \( B \) is the batch size and \( I \) is the input dimension.
@@ -27,17 +27,18 @@ For each input sample \( x_i \in \mathbb{R}^I \), the corresponding output \( y_
 On the CPU, this operation is implemented using nested loops, iterating over the batch dimension and output neurons. The computation is inherently parallelizable but executed sequentially.
 
 \textbf{GPU Implementation:}  
-On the GPU, a custom CUDA kernel (referred to as the \textit{forward kernel}) performs this operation in parallel. The parallelization strategy typically maps:
+On the GPU, a custom CUDA kernel (referred to as the \textit{forward kernel}) performs this operation in parallel~\cite{nvidia_cudnn, gcore_gpu_dl}. The parallelization strategy typically maps:
 \begin{itemize}
     \item each output neuron to a thread in the \( x \)-dimension,
     \item each input sample to a thread/block in the \( y \)-dimension.
 \end{itemize}
 Each thread computes one element of the output matrix \( Y \) by performing a dot product of a row of \( X \) with a column of \( W \), followed by the addition of the corresponding bias term.
 
-This parallelization enables efficient large-scale computation, leveraging the GPU's massive thread-level parallelism for high throughput.
+This parallelization enables efficient large-scale computation, leveraging the GPU's massive thread-level parallelism for high throughput~\cite{gcore_gpu_dl, digitalocean_gpu_opt}.
 
 \subsection{Backward Pass}
-In the backward pass of a fully connected (dense) layer, we compute the gradients of the loss with respect to the input, weights, and biases. Let the following notations be used:
+
+In the backward pass of a fully connected (dense) layer, we compute the gradients of the loss with respect to the input, weights, and biases~\cite{goodfellow2016deep}. Let the following notations be used:
 
 \begin{itemize}
     \item \( X \in \mathbb{R}^{B \times I} \): Input matrix, where \( B \) is the batch size and \( I \) is the input dimension.
@@ -48,7 +49,7 @@ In the backward pass of a fully connected (dense) layer, we compute the gradient
     \item \( \nabla_X, \nabla_W, \nabla_b \): Gradients with respect to input, weights, and biases, respectively.
 \end{itemize}
 
-The gradients are computed as follows:
+The gradients are computed as follows~\cite{goodfellow2016deep, bishop2006pattern}:
 
 \begin{itemize}
     \item \textbf{Gradient with respect to the input (\( \nabla_X \))}:  
@@ -75,12 +76,13 @@ The gradients are computed as follows:
 
 CPU equivalents of these computations are also implemented using nested loops and stored in dedicated buffers.
 
-\subsection{Parameter Updates}\\
-After the backward pass, gradients are used to update the layer's parameters (weights and biases). On the CPU, this is done using standard gradient descent with in-place subtraction. On the GPU, the update parameters kernel kernel applies the update and resets the gradients to zero using atomic operations where needed to avoid race conditions.
+\subsection{Parameter Updates}
+
+After the backward pass, gradients are used to update the layer's parameters (weights and biases). On the CPU, this is done using standard gradient descent with in-place subtraction~\cite{goodfellow2016deep}. On the GPU, the update parameters kernel applies the update and resets the gradients to zero using atomic operations where needed to avoid race conditions~\cite{nvidia_cudnn, digitalocean_gpu_opt}.
 
 \subsection{Weight Initialization}
 
-Proper initialization of weights is crucial for effective training of deep neural networks. In our model, we use \textbf{Xavier Initialization} (also known as \textbf{Glorot Initialization}), proposed by Glorot and Bengio (2010), to initialize the weights of each fully connected layer.
+Proper initialization of weights is crucial for effective training of deep neural networks. In our model, we use \textbf{Xavier Initialization} (also known as \textbf{Glorot Initialization}), proposed by Glorot and Bengio~\cite{glorot2010understanding}, to initialize the weights of each fully connected layer.
 
 \subsubsection*{Xavier Initialization Scheme}
 
@@ -97,27 +99,29 @@ Let the number of input units (fan-in) be \( n_{\text{in}} \) and the number of 
     \]
 \end{itemize}
 
-The bias vector \( b \) is typically initialized to zero.\\
+The bias vector \( b \) is typically initialized to zero~\cite{glorot2010understanding}.
 
-In our implementation we use Xavier Glorot's normal version to initialize the weights and initialize biases to zero.
+In our implementation, we use Xavier Glorot's normal version to initialize the weights and initialize biases to zero.
 
 \subsubsection*{Rationale and Benefits}
 
-Xavier Initialization is designed to maintain the variance of activations and gradients approximately constant across layers during the forward and backward passes. This helps to avoid issues such as:
+Xavier Initialization is designed to maintain the variance of activations and gradients approximately constant across layers during the forward and backward passes~\cite{glorot2010understanding, stanford_xavier}. This helps to avoid issues such as:
 
 \begin{itemize}
     \item \textbf{Vanishing gradients:} When weights are too small, gradients diminish across layers, making training extremely slow.
     \item \textbf{Exploding gradients:} When weights are too large, gradients grow exponentially, leading to unstable updates.
 \end{itemize}
 
-By balancing the variance of the inputs and outputs, Xavier initialization facilitates stable learning dynamics, especially in networks using activation functions like \texttt{tanh} or \texttt{sigmoid}. For networks using ReLU activations, the He initialization is typically preferred.
+By balancing the variance of the inputs and outputs, Xavier initialization facilitates stable learning dynamics, especially in networks using activation functions like \texttt{tanh} or \texttt{sigmoid}~\cite{goodfellow2016deep}. For networks using ReLU activations, the He initialization is typically preferred~\cite{goodfellow2016deep}.
 
-\subsection{Memory Management}\\
-The layer dynamically allocates memory for weights, biases, and intermediate buffers on both host and device. Device memory is allocated only when the layer is switched to GPU mode via the setDevice() function, which also transfers parameters to the device and initializes gradients.
+\subsection{Memory Management}
 
-\subsection{Design Considerations}\\
+The layer dynamically allocates memory for weights, biases, and intermediate buffers on both host and device. Device memory is allocated only when the layer is switched to GPU mode via the \texttt{setDevice()} function, which also transfers parameters to the device and initializes gradients~\cite{nvidia_cudnn, digitalocean_gpu_opt}.
+
+\subsection{Design Considerations}
+
 The implementation cleanly separates host and device logic.
 
-The use of atomicAdd in weight and bias gradient computation ensures correctness when multiple threads write to the same memory location.
+The use of \texttt{atomicAdd} in weight and bias gradient computation ensures correctness when multiple threads write to the same memory location~\cite{nvidia_cudnn}.
 
-Input caching (cached input) is used for efficient gradient computation during backpropagation.
+Input caching (cached input) is used for efficient gradient computation during backpropagation~\cite{goodfellow2016deep}.

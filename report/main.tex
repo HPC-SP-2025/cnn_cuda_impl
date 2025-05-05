@@ -4,6 +4,8 @@
 \usepackage{subcaption}
 \usepackage{parskip}
 \usepackage{hyperref}
+% \usepackage[backend=biber,style=authoryear]{biblatex}
+% \addbibresource{references.bib}
 
 \hypersetup{colorlinks=true,linkcolor=blue, linktocpage}
 
@@ -27,4 +29,9 @@
 \input{sections/results}
 \input{sections/conclusion}
 
+\section{References}
+\printbibliography
+
+\bibliographystyle{plain}
+\bibliography{references}
 \end{document}

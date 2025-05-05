@@ -1,15 +1,13 @@
 \section{ReLU}
 
-The ReLU (Rectified Linear Unit) layer is a non-linear activation function commonly used in deep neural networks. It introduces non-linearity by zeroing out negative values, which helps neural networks learn complex patterns.
+The ReLU (Rectified Linear Unit) layer is a non-linear activation function commonly used in deep neural networks. It introduces non-linearity by zeroing out negative values, which helps neural networks learn complex patterns~\cite{nair2010rectified, goodfellow2016deep}.
 
 \subsection{Forward Pass}
 
 The ReLU activation function is applied element-wise to the input matrix. The computation is defined as:
-
 \[
     Y_{ij} = \max(0, X_{ij})
 \]
-
 where:
 \begin{itemize}
     \item \( X \in \mathbb{R}^{B \times D} \): Input matrix, where \( B \) is the batch size and \( D \) is the number of features.
@@ -20,24 +18,21 @@ where:
 On the CPU, this is implemented using a nested loop over the input matrix dimensions, applying the max operation on each element.
 
 \textbf{GPU Implementation:}  
-On the GPU, a custom CUDA kernel (referred to as the \textit{ReLU forward kernel}) performs this operation in parallel. Each thread is assigned to compute one element of the output matrix:
-
+On the GPU, a custom CUDA kernel (referred to as the \textit{ReLU forward kernel}) performs this operation in parallel~\cite{nvidia_cudnn}. Each thread is assigned to compute one element of the output matrix:
 \begin{itemize}
     \item Each thread reads an element of the input matrix \( X \),
     \item Computes the maximum of that element and zero,
     \item Writes the result to the corresponding position in the output matrix \( Y \).
 \end{itemize}
 
-This design allows the ReLU activation to be applied efficiently across large input tensors, leveraging the GPU's parallel processing capabilities.
+This design allows the ReLU activation to be applied efficiently across large input tensors, leveraging the GPU's parallel processing capabilities~\cite{digitalocean_gpu_opt}.
 
 \subsection{Backward Pass}
 
-The backward pass of the ReLU layer computes the gradient of the loss with respect to the input, using the chain rule. Let \( \nabla_Y \) be the gradient from the next layer:
-
+The backward pass of the ReLU layer computes the gradient of the loss with respect to the input, using the chain rule~\cite{goodfellow2016deep}. Let \( \nabla_Y \) be the gradient from the next layer:
 \[
     \nabla_X = \nabla_Y \odot \mathbb{1}_{X > 0}
 \]
-
 where:
 \begin{itemize}
     \item \( \nabla_Y \in \mathbb{R}^{B \times D} \): Upstream gradient from the next layer.
@@ -51,19 +46,20 @@ The backward pass is computed by looping over each element and setting the gradi
 
 \textbf{GPU Implementation:}  
 A custom CUDA kernel (the \textit{ReLU backward kernel}) parallelizes this process by:
-
 \begin{itemize}
     \item Loading an element of \( X \) and \( \nabla_Y \),
     \item Checking if \( X_{ij} > 0 \),
-    \item Propagating the gradient accordingly.
+    \item Propagating the gradient accordingly~\cite{nvidia_cudnn}.
 \end{itemize}
 
-This implementation uses the cached input from the forward pass to compute the backward mask efficiently.
+This implementation uses the cached input from the forward pass to compute the backward mask efficiently~\cite{neptune_gpu_optimization}.
 
-\subsection{Memory Management}\\
-The layer maintains memory for intermediate outputs and cached inputs used during backpropagation. Device memory is allocated when switching to GPU mode via the \texttt{setDevice()} function. No parameters (weights or biases) are stored for the ReLU layer, as it is parameter-free.
+\subsection{Memory Management}
 
-\subsection{Design Considerations}\\
-The ReLU layer is designed for simplicity and speed. Since it is stateless and parameter-free, its forward and backward computations are lightweight and parallel-friendly. 
+The layer maintains memory for intermediate outputs and cached inputs used during backpropagation. Device memory is allocated when switching to GPU mode via the \texttt{setDevice()} function~\cite{nvidia_cudnn}. No parameters (weights or biases) are stored for the ReLU layer, as it is parameter-free~\cite{goodfellow2016deep}.
 
-Caching the input during the forward pass avoids redundant computation during the backward pass. This design decision balances memory usage and computational efficiency.
+\subsection{Design Considerations}
+
+The ReLU layer is designed for simplicity and speed. Since it is stateless and parameter-free, its forward and backward computations are lightweight and parallel-friendly~\cite{nair2010rectified, goodfellow2016deep}.
+
+Caching the input during the forward pass avoids redundant computation during the backward pass. This design decision balances memory usage and computational efficiency~\cite{aws_gpu_performance}.
