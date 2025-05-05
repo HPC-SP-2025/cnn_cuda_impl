@@ -54,3 +54,11 @@ To track the performance, we accumulate and average the loss over defined interv
 The training loop includes manual allocation and deallocation of host and device memory using \texttt{new}, \texttt{delete}, \texttt{cudaMalloc}, and \texttt{cudaFree}. Careful memory handling ensures there are no leaks and that the program runs efficiently on GPU.
 
 
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{figures/loss_plot_gpu.png}
+  \end{center}
+  \caption{A plot of the training loss of a neural network built using MiniTorch on the MNIST dataset.}\label{fig:loss-plot}
+\end{figure}
+
+
