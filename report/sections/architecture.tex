@@ -1,1 +1,82 @@
 \section{Architecture}
+
+
+The \texttt{Sequential} class represents a foundational component in this neural network framework, designed to provide a simple and flexible structure for constructing feed-forward neural networks. The design is inspired by established deep learning libraries such as PyTorch and Keras, where models are built by stacking layers in a linear sequence. This architectural pattern is especially suitable for problems where data flows through a fixed series of transformations.
+
+\subsection{Architectural Philosophy}
+
+At its core, the \texttt{Sequential} model encapsulates a sequence of layers that are executed one after the other. Each layer must implement a common interface, allowing different types of layers—such as linear (dense) layers, activation functions, or custom computational layers—to be added to the model. This promotes modularity, reusability, and ease of experimentation.
+
+The model acts as a controller that manages:
+\begin{itemize}
+    \item The forward flow of data through layers,
+    \item The backward propagation of gradients for learning,
+    \item Parameter updates during training.
+\end{itemize}
+
+\subsection{Layer Management with \texttt{addLayer()}}
+
+The \texttt{addLayer()} method is used to add a new layer to the model. Internally, it appends a pointer to a \texttt{Layer} object into the model’s list of layers. The order in which \texttt{addLayer()} is called determines the data flow during forward and backward passes.
+
+\begin{verbatim}
+Sequential model(input_size, output_size);
+model.addLayer(new LinearLayer(...));
+model.addLayer(new ActivationLayer(...));
+\end{verbatim}
+
+Each layer adheres to a common interface, enabling the \texttt{Sequential} model to invoke methods such as \texttt{forward()}, \texttt{backward()}, and \texttt{updateParameters()} without needing to know the internal implementation of each layer.
+
+\subsection{Forward Propagation}
+
+The \texttt{forward()} method passes the input data through each layer in sequence. The output from one layer becomes the input to the next. This continues until the final layer produces the output of the entire model. This step is used for both inference and the forward phase of training.
+
+\subsection{Backward Propagation}
+
+Training requires computing gradients of the loss with respect to model parameters. The \texttt{backward()} method begins this process by:
+\begin{enumerate}
+    \item Computing the loss using a loss layer, given the predicted output and ground truth.
+    \item Calculating the gradient of the loss.
+    \item Passing this gradient backward through the network by calling the \texttt{backward()} method on each layer in reverse order.
+\end{enumerate}
+
+Each layer uses the incoming gradient to compute its own gradients and passes the new gradient to the preceding layer.
+
+\subsection{Loss Layer Integration}
+
+The model design separates the architecture from the loss computation. A dedicated loss layer handles:
+\begin{itemize}
+    \item The calculation of the scalar loss value.
+    \item The generation of the initial gradient for backward propagation.
+\end{itemize}
+
+This separation allows flexibility in using different loss functions without modifying the core model.
+
+\subsection{Device Configuration}
+
+The model includes a method to set the compute device, typically a GPU. The \texttt{setDevice()} method ensures that this setting is propagated to all layers, maintaining consistency in memory management and computation location.
+
+\subsection{Parameter Management and Utilities}
+
+To support training and deployment, the \texttt{Sequential} class provides several utility methods:
+\begin{itemize}
+    \item \texttt{updateParameters()} applies weight updates using the computed gradients.
+    \item \texttt{summary()} prints detailed information about each layer, including input/output size, number of parameters, and device ID.
+    \item \texttt{saveModel()} and \texttt{loadModel()} allow the model's parameters to be saved to and loaded from a file.
+\end{itemize}
+
+These utilities enable model persistence and support debugging and performance monitoring.
+
+\subsection{Extensibility and Flexibility}
+
+The \texttt{Sequential} architecture is designed with extensibility in mind. Users can:
+\begin{itemize}
+    \item Implement new types of layers by extending the \texttt{Layer} interface.
+    \item Plug in custom loss functions.
+    \item Access gradients and parameters programmatically for integration with optimizers or distributed training.
+\end{itemize}
+
+This modular approach enables the development of more complex architectures in the future, including recurrent networks or attention-based models, while preserving the simplicity of sequential execution.
+
+
+
+
