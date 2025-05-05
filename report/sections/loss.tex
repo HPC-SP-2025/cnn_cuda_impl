@@ -1,1 +1,24 @@
 \section{Loss}
+
+We train the neural network on the MNIST dataset, which consists of 10 class labels. Accordingly, we use the cross-entropy loss function during training. The loss is computed using the following expression:
+$$ L = -\sum_{i=0} ^ N y_i log(\hat{y}_i) $$
+
+\subsection{Forward Pass}
+In the forward pass, the loss is computed and returned. Here, $y_i$ is a one-hot encoded vector where the element corresponding to the true class is 1, and all other elements are 0. Therefore, the loss effectively reduces to the negative logarithm of the predicted probability for the true class.
+
+\textbf{CPU Implementation:}  
+The naive CPU implementation uses a single for loop over the batch size. In the OpenMP implementation, we parallelize the computation using the "parallel for" directive along with the reduction clause to accumulate the total loss across threads.  
+
+\textbf{GPU Implementation:}  
+The CUDA kernel is designed such that each thread computes the logarithm of the predicted probability for the true class and loads it into shared memory. A parallel reduction is then used to sum these log values. The kernel is launched with a block size of 256, which provides best occupancy. The grid size is calculated as (batch size \% block size).
+
+\subsection{Backward Pass}
+The backward pass involves computing the gradients of the loss with respect to the predicted outputs $\hat{y}$. This is calculated as:
+$ \Delta L = \hat{y}_i - y_i$. 
+
+\textbf{CPU Implementation:}
+The naive CPU implementation uses nested for loops: the outer loop iterates over the batch size, and the inner loop iterates over the number of classes. In the OpenMP version, we use a simple for directive to parallelize the computation.
+
+
+\textbf{GPU Implementation:}  
+Initially, the CUDA kernel was designed such that each thread processed an entire output vector using a loop. However, this implementation has strided memory access and potential bank conflicts. Since GPUs are optimized for sequential memory access, we revised the kernel so that each thread processes a single element of the output vector. This approach improves memory efficiency, as threads within a warp now access consecutive memory locations.

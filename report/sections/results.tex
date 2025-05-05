@@ -1,0 +1,48 @@
+\section{Results}
+
+\textbf{Performance Gain Over Batch Iterations}
+
+To evaluate the training performance across different computational configurations, we tested three hardware setups: single-threaded CPU, multi-threaded CPU using OpenMP (8 threads), and GPU acceleration. The experiments were performed with an input image size of 28×28 and a batch size of 32. The training durations for varying numbers of iterations (1, 100, and 200) are summarized in Table 1.
+
+\begin{table}[h]
+	\centering
+	\caption{Training Time vs. Iterations}
+	\begin{tabular}{|c|c|c|c|}
+		\hline
+		\textbf{Iterations} & \textbf{CPU (1 Thread)} & \textbf{CPU} & \textbf{GPU} \\
+		\textbf{} & \textbf{} & \textbf{(OpenMP - 8 Threads)} & \textbf{} \\
+		\hline
+		1   & 1.3s   & 114ms & 3.8ms \\
+		\hline
+		100 & 132s  & 10s   & 121ms \\
+		\hline
+		200 & 264s  & 20s   & 232ms \\
+		\hline
+	\end{tabular}
+	\label{tab:iteration-performance}
+\end{table}
+
+The results show a substantial performance boost using parallel processing. The OpenMP-based CPU training achieved a 13x speedup over single-threaded execution, while GPU acceleration significantly outperformed both CPU configurations, especially at higher iteration counts.
+
+\textbf{Performance Gain on Batch Size} \\
+To study the effect of batch size on training efficiency, we fixed the number of iterations to 100 and varied the batch size (1, 128, 256). The timing results and per-sample performance gain are presented in Table 2.
+
+\begin{table}[h]
+	\centering
+	\caption{Training Time vs. Batch Size}
+	\begin{tabular}{|c|c|c|c|c|}
+		\hline
+		\textbf{Batch Size} & \textbf{CPU (1 Thread)} & \textbf{CPU} & \textbf{GPU} & \textbf{Performance Gain} \\
+		& & \textbf{(OpenMP - 8 Threads)} &  & \textbf{(per sample)} \\
+		\hline
+		1   & 1.5s  & 1.5s  & 78ms  & - \\
+		128 & 264s & 36s   & 387ms & 26 \\
+		256 & 532s & 70s   & 553ms & 1.5 \\
+		\hline
+	\end{tabular}
+	\label{tab:batchsize-performance}
+\end{table}
+
+From the table, it's evident that increasing the batch size yields notable speedups in GPU execution. While the overall training time on the GPU increases from 387 ms (batch size 128) to 553 ms (batch size 256), the number of images processed per second still improves with the larger batch size. This is reflected in the per-sample performance gain, which remains higher for batch size 256, showing a 1.5× gain over batch size 128. This highlights the efficiency of batch processing on GPU hardware, where larger batches better utilize the parallel architecture despite a slight increase in total execution time.
+
+
